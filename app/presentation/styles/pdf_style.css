@@ -1,0 +1,189 @@
+/* Medical PDF Report Stylesheet */
+/* Professional styling for hospital radiological reports */
+
+@page {
+    size: A4;
+    margin: 2cm 1.5cm;
+    @bottom-center {
+        content: "Pagina " counter(page) " din " counter(pages);
+        font-size: 10px;
+        color: #666;
+        font-family: 'DejaVu Sans', Arial, sans-serif;
+    }
+}
+
+/* Base typography and layout */
+body {
+    font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #2c3e50;
+    margin: 0;
+    padding: 0;
+    background: white;
+    text-align: justify;
+}
+
+/* Main heading */
+h1 {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    color: #1a4c96;
+    margin: 0 0 20px 0;
+    padding: 15px 0;
+    border-bottom: 3px solid #1a4c96;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Section headings */
+h2 {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 25px 0 10px 0;
+    padding: 8px 0 8px 12px;
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #1a4c96;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Generation date styling */
+body > p:first-of-type {
+    text-align: right;
+    font-size: 11px;
+    color: #6c757d;
+    margin: 0 0 20px 0;
+    font-style: italic;
+}
+
+/* Section containers */
+.section {
+    margin: 20px 0;
+    page-break-inside: avoid;
+}
+
+/* Metadata table styling */
+.meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 20px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: white;
+}
+
+.meta-table td {
+    padding: 12px 15px;
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.meta-table td.label {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    color: #495057;
+    width: 35%;
+    text-transform: capitalize;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.meta-table td:not(.label) {
+    background: white;
+    color: #2c3e50;
+    font-weight: 500;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Alternating row colors for better readability */
+.meta-table tr:nth-child(even) td.label {
+    background: linear-gradient(135deg, #f1f3f4 0%, #e1e5e9 100%);
+}
+
+.meta-table tr:nth-child(even) td:not(.label) {
+    background: #fafbfc;
+}
+
+/* Text block styling for results */
+.text-block {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 15px 0;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 12px;
+    color: #2c3e50;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    min-height: 100px;
+}
+
+/* Professional footer styling */
+.footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+    text-align: center;
+    font-size: 10px;
+    color: #6c757d;
+}
+
+/* Print-specific adjustments */
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .section {
+        page-break-inside: avoid;
+    }
+
+    h1, h2 {
+        page-break-after: avoid;
+    }
+
+    .meta-table {
+        page-break-inside: avoid;
+    }
+}
+
+/* Professional medical styling enhancements */
+.meta-table td.label::before {
+    content: "● ";
+    color: #1a4c96;
+    font-weight: bold;
+}
+
+/* Ensure proper spacing and professional appearance */
+* {
+    box-sizing: border-box;
+}
+
+/* Enhanced typography for medical context */
+strong, b {
+    font-weight: 600;
+    color: #1a4c96;
+}
+
+/* Subtle professional touches */
+.section:not(:last-child) {
+    border-bottom: 1px dotted #dee2e6;
+    padding-bottom: 15px;
+}
+
+/* Medical report specific styling */
+.text-block p {
+    margin: 0 0 10px 0;
+}
+
+.text-block p:last-child {
+    margin-bottom: 0;
+}

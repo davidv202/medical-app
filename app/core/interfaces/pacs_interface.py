@@ -1,0 +1,25 @@
+from abc import ABC, abstractmethod
+from typing import List, Dict, Any
+from app.core.entities.study import Study
+
+
+class IPacsService(ABC):
+    @abstractmethod
+    def get_all_studies(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def get_study_metadata(self, study_id: str) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def get_study_instances(self, study_id: str) -> List[Dict[str, Any]]:
+        pass
+
+    @abstractmethod
+    def get_dicom_file(self, instance_id: str) -> bytes:
+        pass
+
+    @abstractmethod
+    def send_to_pacs(self, data: bytes, target_url: str) -> bool:
+        pass

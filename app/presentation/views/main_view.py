@@ -1,0 +1,96 @@
+from PyQt6.QtWidgets import (
+    QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QStackedWidget, QLabel
+)
+from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.controllers.pacs_controller import PacsController
+from app.presentation.views.pacs_view import PacsView
+from app.presentation.views.patients_view import PatientsView
+from app.presentation.styles.style_manager import load_style
+
+
+class MainView(QWidget):
+    def __init__(self, auth_controller: AuthController, pacs_controller: PacsController):
+        super().__init__()
+        self._auth_controller = auth_controller
+        self._pacs_controller = pacs_controller
+        self.setWindowTitle("Medical PACS System")
+        self.setGeometry(100, 100, 1600, 800)
+        self._setup_ui()
+        load_style(self)
+
+    def _setup_ui(self):
+        main_layout = QVBoxLayout(self)
+
+        # Navigation bar
+        self.nav_widget = QWidget()
+        self.nav_widget.setObjectName("NavBar")
+        nav_bar = QHBoxLayout(self.nav_widget)
+
+        # Navigation buttons
+        self.studies_button = QPushButton("Studii")
+        self.studies_button.setObjectName("NavButton")
+        self.patients_button = QPushButton("Pacienti")
+        self.patients_button.setObjectName("NavButton")
+
+        # User info and logout
+        current_user = self._auth_controller.get_current_user()
+        username = current_user.username if current_user else "Unknown"
+        role = current_user.role.value.title() if current_user else "Unknown"
+
+        self.user_label = QLabel(f"Bine ai venit, {username} ({role})")
+        self.user_label.setObjectName("UserLabel")
+
+        self.logout_button = QPushButton("Iesi din cont")
+        self.logout_button.setObjectName("LogoutButton")
+
+        # Connect navigation
+        self.studies_button.clicked.connect(lambda: self._switch_page(0))
+        self.patients_button.clicked.connect(lambda: self._switch_page(1))
+        self.logout_button.clicked.connect(self._handle_logout)
+
+        # Layout navigation bar
+        nav_bar.addWidget(self.studies_button)
+        nav_bar.addWidget(self.patients_button)
+        nav_bar.addStretch()
+        nav_bar.addWidget(self.user_label)
+        nav_bar.addWidget(self.logout_button)
+
+        main_layout.addWidget(self.nav_widget)
+
+        # Pages
+        self.pages = QStackedWidget()
+        self.pacs_page = PacsView(self._pacs_controller)
+        self.patients_page = PatientsView()
+
+        self.pages.addWidget(self.pacs_page)
+        self.pages.addWidget(self.patients_page)
+
+        main_layout.addWidget(self.pages)
+
+        # Set initial page
+        self._switch_page(0)
+
+    def _switch_page(self, index: int):
+        self.pages.setCurrentIndex(index)
+
+        # Update button states
+        self.studies_button.setProperty("active", index == 0)
+        self.patients_button.setProperty("active", index == 1)
+
+        # Refresh styles to show active state
+        self.studies_button.style().unpolish(self.studies_button)
+        self.studies_button.style().polish(self.studies_button)
+        self.patients_button.style().unpolish(self.patients_button)
+        self.patients_button.style().polish(self.patients_button)
+
+    def _handle_logout(self):
+        if self._auth_controller.logout(self):
+            self._open_login_window()
+
+    def _open_login_window(self):
+        from app.presentation.views.login_view import LoginView
+        from app.di.container import Container
+
+        self.login_window = LoginView(Container.get_auth_controller())
+        self.login_window.show()
+        self.close()
