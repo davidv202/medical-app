@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLineEdit, QComboBox,
     QPushButton, QHBoxLayout, QLabel, QGroupBox, QTableWidget,
@@ -20,6 +21,7 @@ class AdminView(QWidget):
         self.setGeometry(100, 100, 1600, 800)
         self._setup_ui()
         load_style(self)
+        self._setup_user_search_shortcuts()
         self._load_users()
 
     def _setup_ui(self):
@@ -74,6 +76,31 @@ class AdminView(QWidget):
         section_title.setObjectName("SectionTitle")
         layout.addWidget(section_title)
 
+        # Search section for users
+        search_layout = QHBoxLayout()
+
+        self.user_search_input = QLineEdit()
+        self.user_search_input.setPlaceholderText("🔍 Caută utilizatori (username, rol)...")
+        self.user_search_input.setObjectName("SearchInput")
+        self.user_search_input.textChanged.connect(self._filter_users)
+
+        self.clear_user_search_button = QPushButton("✕")
+        self.clear_user_search_button.setObjectName("ClearSearchButton")
+        self.clear_user_search_button.setMaximumWidth(25)
+        self.clear_user_search_button.setToolTip("Șterge căutarea")
+        self.clear_user_search_button.clicked.connect(self._clear_user_search)
+        self.clear_user_search_button.setVisible(False)
+
+        search_layout.addWidget(self.user_search_input)
+        search_layout.addWidget(self.clear_user_search_button)
+        layout.addLayout(search_layout)
+
+        # Search results info
+        self.user_results_label = QLabel()
+        self.user_results_label.setVisible(False)
+        self.user_results_label.setStyleSheet("color: #6b7280; font-size: 11px; padding: 2px;")
+        layout.addWidget(self.user_results_label)
+
         # Users table
         self.users_table = QTableWidget()
         self.users_table.setColumnCount(3)
@@ -87,7 +114,6 @@ class AdminView(QWidget):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         # Connect selection change
         self.users_table.itemSelectionChanged.connect(self._on_user_selected)
@@ -97,10 +123,10 @@ class AdminView(QWidget):
         # User actions
         user_actions_layout = QHBoxLayout()
 
-        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button = QPushButton("🔄 Refresh")
         self.refresh_button.clicked.connect(self._load_users)
 
-        self.delete_user_button = QPushButton("Sterge user")
+        self.delete_user_button = QPushButton("🗑️ Sterge user")
         self.delete_user_button.clicked.connect(self._delete_user)
         self.delete_user_button.setEnabled(False)
 
@@ -111,6 +137,73 @@ class AdminView(QWidget):
         layout.addLayout(user_actions_layout)
 
         return widget
+
+    def _filter_users(self, text: str):
+        """Filter users based on username only"""
+        self.clear_user_search_button.setVisible(bool(text.strip()))
+
+        if not text.strip():
+            self._show_all_users()
+            return
+
+        # Filter users in table by username only
+        visible_count = 0
+        total_count = self.users_table.rowCount()
+
+        for row in range(total_count):
+            username_item = self.users_table.item(row, 1)  # Username column
+
+            # Check if search text matches username only
+            username_match = text.lower() in username_item.text().lower() if username_item else False
+
+            if username_match:
+                self.users_table.setRowHidden(row, False)
+                visible_count += 1
+            else:
+                self.users_table.setRowHidden(row, True)
+
+        # Update results info
+        if visible_count == 0:
+            self.user_results_label.setText(f"Nu s-au găsit utilizatori cu username-ul '{text}'")
+            self.user_results_label.setStyleSheet("color: #dc2626; font-size: 11px; padding: 2px;")
+        else:
+            self.user_results_label.setText(f"Găsiți {visible_count} din {total_count} utilizatori")
+            self.user_results_label.setStyleSheet("color: #059669; font-size: 11px; padding: 2px;")
+
+        self.user_results_label.setVisible(True)
+
+    def _show_all_users(self):
+        """Show all users (remove filtering)"""
+        for row in range(self.users_table.rowCount()):
+            self.users_table.setRowHidden(row, False)
+        self.user_results_label.setVisible(False)
+
+    def _clear_user_search(self):
+        """Clear user search"""
+        self.user_search_input.clear()
+        self.clear_user_search_button.setVisible(False)
+        self._show_all_users()
+
+    def _setup_user_search_shortcuts(self):
+        """Setup keyboard shortcuts for user search"""
+        # Add this to your existing _setup_shortcuts method or create new one
+
+        # Ctrl+U to focus user search
+        user_search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        user_search_shortcut.activated.connect(self._focus_user_search)
+
+        # Escape to clear user search (when focused)
+        clear_user_search_shortcut = QShortcut(QKeySequence("Escape"), self)
+        clear_user_search_shortcut.activated.connect(self._clear_user_search_if_focused)
+
+    def _focus_user_search(self):
+        """Focus user search input"""
+        self.user_search_input.setFocus()
+
+    def _clear_user_search_if_focused(self):
+        """Clear user search only if search input has focus"""
+        if self.user_search_input.hasFocus():
+            self._clear_user_search()
 
     def _create_user_form_section(self):
         widget = QWidget()
@@ -172,6 +265,14 @@ class AdminView(QWidget):
 
         layout.addStretch()
 
+        shortcuts_info = QLabel("💡 Shortcuts: Ctrl+F (Search Users) • Esc (Clear Search) • F5 (Refresh)")
+        shortcuts_info.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic; padding: 5px;")
+        shortcuts_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        shortcuts_info.setMaximumHeight(25)
+        layout.addWidget(shortcuts_info)
+
+        layout.addStretch()
+
         return widget
 
     def _load_users(self):
@@ -187,8 +288,12 @@ class AdminView(QWidget):
                 self.users_table.setItem(row, 1, QTableWidgetItem(user.username))
                 self.users_table.setItem(row, 2, QTableWidgetItem(user.role.value.title()))
 
+            # Clear search when reloading
+            self._clear_user_search()
+
         except Exception as e:
-            self._notification_service.show_error(self, "Eroare", f"Nu s-au putut incarca conturile utilizatorilor: {e}")
+            self._notification_service.show_error(self, "Eroare",
+                                                  f"Nu s-au putut incarca conturile utilizatorilor: {e}")
 
     def _on_user_selected(self):
         current_row = self.users_table.currentRow()

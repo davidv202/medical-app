@@ -1,7 +1,8 @@
 import sys
 import os
-from PyQt6.QtWidgets import QApplication
+
 from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
 from app.presentation.views.login_view import LoginView
 from app.di.container import Container
 from app.config.settings import Settings
@@ -58,9 +59,9 @@ def main():
         login_window.show()
 
         # Optional: Setup session monitoring timer (uncomment if needed for debugging)
-        # session_timer = QTimer()
-        # session_timer.timeout.connect(log_session_info)
-        # session_timer.start(10000)  # Log every 10 seconds
+        session_timer = QTimer()
+        session_timer.timeout.connect(log_session_info)
+        session_timer.start(10000)  # Log every 10 seconds
 
         print("Application started successfully")
 

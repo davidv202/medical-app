@@ -4,9 +4,10 @@ import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 )
-from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QThread, Qt
+from PyQt6.QtGui import QKeySequence, QShortcut
 from app.presentation.controllers.pacs_controller import PacsController, StudiesWorker
-from app.presentation.widgets.study_list_widget import StudyListWidget, QueueListWidget
+from app.presentation.widgets.study_list_widget import SearchableStudyListWidget, QueueListWidget
 from app.presentation.widgets.metadata_widget import MetadataWidget, ResultWidget
 from app.services.notification_service import NotificationService
 from app.presentation.styles.style_manager import load_style
@@ -23,85 +24,148 @@ class PacsView(QWidget):
         self.setWindowTitle("PACS Viewer")
         self.setGeometry(100, 100, 1600, 800)
         self._setup_ui()
+        self._setup_shortcuts()
         load_style(self)
         self._load_studies()
 
     def _setup_ui(self):
+        # Main layout with better spacing
         main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(6)
+        main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # Studies list
-        main_layout.addWidget(QLabel("Available Studies:"))
-        self.study_list = StudyListWidget()
+        # Compact header
+        header_layout = QHBoxLayout()
+        studies_label = QLabel("📋 Available Studies")
+        studies_label.setObjectName("SectionTitle")
+
+        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button.setMaximumWidth(100)
+        self.refresh_button.setMaximumHeight(30)
+        self.refresh_button.clicked.connect(self._load_studies)
+
+        header_layout.addWidget(studies_label)
+        header_layout.addStretch()
+        header_layout.addWidget(self.refresh_button)
+        main_layout.addLayout(header_layout)
+
+        # Study list
+        self.study_list = SearchableStudyListWidget()
         self.study_list.study_selected.connect(self._on_study_selected)
+        self.study_list.setMaximumHeight(250)
         main_layout.addWidget(self.study_list)
 
-        # Bottom section with metadata and queue
-        bottom_layout = QHBoxLayout()
+        # Horizontal layout for metadata and queue
+        middle_layout = QHBoxLayout()
 
-        # Left column - Metadata
+        # Left: Metadata (compact)
         left_col = QVBoxLayout()
-        left_col.addWidget(QLabel("Study Metadata:"))
+        metadata_label = QLabel("📊 Metadata")
+        metadata_label.setObjectName("SectionTitle")
+        left_col.addWidget(metadata_label)
+
         self.metadata_widget = MetadataWidget()
+        self.metadata_widget.setMaximumHeight(150)  # Limit height
         left_col.addWidget(self.metadata_widget)
 
-        # Right column - Queue
+        # Right: Queue (compact)
         right_col = QVBoxLayout()
-        right_col.addWidget(QLabel("Studies ready for upload:"))
+        queue_label = QLabel("📤 Queue")
+        queue_label.setObjectName("SectionTitle")
+        right_col.addWidget(queue_label)
+
         self.queue_list = QueueListWidget()
+        self.queue_list.setMaximumHeight(120)  # Limit height
         right_col.addWidget(self.queue_list)
 
-        bottom_layout.addLayout(left_col)
-        bottom_layout.addLayout(right_col)
-        main_layout.addLayout(bottom_layout)
+        middle_layout.addLayout(left_col)
+        middle_layout.addLayout(right_col)
+        main_layout.addLayout(middle_layout)
 
-        # Results section
-        main_layout.addWidget(QLabel("Examination Results:"))
+        # Results section (compact)
+        results_label = QLabel("📝 Results")
+        results_label.setObjectName("SectionTitle")
+        main_layout.addWidget(results_label)
+
         self.result_widget = ResultWidget()
+        self.result_widget.setMaximumHeight(100)  # Limit height
         main_layout.addWidget(self.result_widget)
 
-        # PDF buttons
-        pdf_button_row = QHBoxLayout()
-        pdf_button_row.addStretch()
-
-        self.preview_button = QPushButton("Preview PDF")
-        self.preview_button.setObjectName("PreviewButton")
-        self.preview_button.clicked.connect(self._preview_pdf)
-
-        self.print_button = QPushButton("Print")
-        self.print_button.setObjectName("PrintButton")
-        self.print_button.clicked.connect(self._print_pdf)
-
-        pdf_button_row.addWidget(self.preview_button)
-        pdf_button_row.addWidget(self.print_button)
-        main_layout.addLayout(pdf_button_row)
-
-        # Main action buttons
-        main_layout.addLayout(self._setup_action_buttons())
-
-    def _setup_action_buttons(self):
+        # Compact button layout - single row
         button_layout = QHBoxLayout()
 
-        self.generate_pdf_button = QPushButton("Generate PDF")
+        self.preview_button = QPushButton("👁️ Preview")
+        self.preview_button.setObjectName("PreviewButton")
+        self.preview_button.setMaximumHeight(35)
+        self.preview_button.clicked.connect(self._preview_pdf)
+
+        self.generate_pdf_button = QPushButton("💾 Generate PDF")
         self.generate_pdf_button.setObjectName("GeneratePDFButton")
+        self.generate_pdf_button.setMaximumHeight(35)
         self.generate_pdf_button.clicked.connect(self._export_pdf)
 
-        self.send_button = QPushButton("Send to PACS")
-        self.send_button.setObjectName("SendPACSButton")
-        self.send_button.clicked.connect(self._send_to_pacs)
+        self.print_button = QPushButton("🖨️ Print")
+        self.print_button.setObjectName("PrintButton")
+        self.print_button.setMaximumHeight(35)
+        self.print_button.clicked.connect(self._print_pdf)
 
-        self.queue_button = QPushButton("Load Study")
+        self.queue_button = QPushButton("➕ Load Study")
         self.queue_button.setObjectName("QueueButton")
+        self.queue_button.setMaximumHeight(35)
         self.queue_button.clicked.connect(self._queue_studies)
 
+        self.send_button = QPushButton("🚀 Send to PACS")
+        self.send_button.setObjectName("SendPACSButton")
+        self.send_button.setMaximumHeight(35)
+        self.send_button.clicked.connect(self._send_to_pacs)
+
+        button_layout.addWidget(self.preview_button)
         button_layout.addWidget(self.generate_pdf_button)
+        button_layout.addWidget(self.print_button)
         button_layout.addWidget(self.queue_button)
         button_layout.addWidget(self.send_button)
 
-        return button_layout
+        main_layout.addLayout(button_layout)
+
+        # Shortcuts info (compact)
+        shortcuts_label = QLabel("💡 Ctrl+F (Search) • F5 (Refresh) • Esc (Clear)")
+        shortcuts_label.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic;")
+        shortcuts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        shortcuts_label.setMaximumHeight(20)
+        main_layout.addWidget(shortcuts_label)
+
+    def _setup_shortcuts(self):
+        """Setup keyboard shortcuts for improved usability"""
+        # Ctrl+F to focus search
+        search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        search_shortcut.activated.connect(self.study_list.focus_search)
+
+        # Escape to clear search
+        clear_shortcut = QShortcut(QKeySequence("Escape"), self)
+        clear_shortcut.activated.connect(self._clear_search_if_focused)
+
+        # F5 to refresh
+        refresh_shortcut = QShortcut(QKeySequence("F5"), self)
+        refresh_shortcut.activated.connect(self._load_studies)
+
+        # Ctrl+G to generate PDF quickly
+        generate_shortcut = QShortcut(QKeySequence("Ctrl+G"), self)
+        generate_shortcut.activated.connect(self._export_pdf)
+
+        # Ctrl+P to preview
+        preview_shortcut = QShortcut(QKeySequence("Ctrl+P"), self)
+        preview_shortcut.activated.connect(self._preview_pdf)
+
+    def _clear_search_if_focused(self):
+        """Clear search only if search input has focus"""
+        if hasattr(self.study_list, 'search_input') and self.study_list.search_input.hasFocus():
+            self.study_list._clear_search()
 
     def _load_studies(self):
         """Load studies from PACS in background thread"""
         self.study_list.set_loading(True)
+        self.refresh_button.setEnabled(False)
+        self.refresh_button.setText("⏳ Loading...")
 
         self.study_thread = QThread()
         self.worker = StudiesWorker(self._pacs_controller)
@@ -122,6 +186,8 @@ class PacsView(QWidget):
     def _on_studies_loaded(self, study_ids):
         """Handle successful studies loading"""
         self.study_list.set_loading(False)
+        self.refresh_button.setEnabled(True)
+        self.refresh_button.setText("🔄 Refresh")
 
         for study_id in study_ids:
             try:
@@ -134,6 +200,8 @@ class PacsView(QWidget):
     def _on_studies_error(self, error_message):
         """Handle studies loading error"""
         self.study_list.set_loading(False)
+        self.refresh_button.setEnabled(True)
+        self.refresh_button.setText("🔄 Refresh")
         self._notification_service.show_error(self, "Error", f"Error loading studies:\n{error_message}")
 
     def _on_study_selected(self, study_id: str):
