@@ -23,3 +23,11 @@ class IPacsService(ABC):
     @abstractmethod
     def send_to_pacs(self, data: bytes, target_url: str) -> bool:
         pass
+
+    @abstractmethod
+    def send_study_to_pacs(self, study_id: str, target_url: str, target_auth: str, examination_result: str = None) -> bool:
+        pass
+
+    @abstractmethod
+    def get_examination_result_from_dicom(self, instance_id: str) -> str:
+        pass

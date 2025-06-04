@@ -1,11 +1,18 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QListWidget, QListWidgetItem, QLabel
+    QListWidget, QListWidgetItem, QLabel, QSizePolicy, QScrollArea
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QIcon
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, NamedTuple
 
+class QueuedStudy(NamedTuple):
+    study_id: str
+    display_text: str
+    examination_result: str
+    patient_name: str
+    study_date: str
+    description: str
 
 class SearchableStudyListWidget(QWidget):
     """Enhanced study list widget with search functionality"""
@@ -25,51 +32,64 @@ class SearchableStudyListWidget(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
+        layout.setSpacing(4)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        # Search section
+        # Search
         search_layout = QHBoxLayout()
-
-        # Search input
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Caută studii (nume pacient, dată, descriere)...")
         self.search_input.setObjectName("SearchInput")
+        self.search_input.setPlaceholderText("🔍 Caută studii...")
         self.search_input.textChanged.connect(self._on_search_text_changed)
         self.search_input.returnPressed.connect(self._perform_search)
 
-        # Clear search button
         self.clear_button = QPushButton("✕")
         self.clear_button.setObjectName("ClearSearchButton")
         self.clear_button.setMaximumWidth(30)
-        self.clear_button.setToolTip("Șterge căutarea")
         self.clear_button.clicked.connect(self._clear_search)
-        self.clear_button.setVisible(False)  # Hidden initially
+        self.clear_button.setVisible(False)
+
+        search_container = QWidget()
+        search_container.setObjectName("SearchContainer")
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setContentsMargins(0, 0, 0, 0)
+        search_layout.setSpacing(4)
 
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(self.clear_button)
+        layout.addWidget(search_container)
 
-        layout.addLayout(search_layout)
-
-        # Results info
+        # Hidden results label
         self.results_label = QLabel()
-        self.results_label.setObjectName("ResultsLabel")
         self.results_label.setVisible(False)
+        self.results_label.setMaximumHeight(0)
         layout.addWidget(self.results_label)
 
-        # Study list - FIXED: Add proper height constraint for scroll
+        # Study list scrollable
         self.study_list = QListWidget()
         self.study_list.setObjectName("StudyList")
         self.study_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.study_list.itemClicked.connect(self._on_item_clicked)
 
-        # KEY FIX: Set fixed height to enable scrolling
-        self.study_list.setFixedHeight(200)
+        # Nu mai setăm fixed height pe listă!
+        self.study_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        # FORCE scrollbars to be visible when needed
-        self.study_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.study_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # ScrollArea doar pentru listă
+        scroll_area = QScrollArea()
+        scroll_area.setObjectName("StudyListScrollArea")
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        layout.addWidget(self.study_list)
+        # Încapsulăm lista în container pentru scrollarea ei
+        list_container = QWidget()
+        list_layout = QVBoxLayout(list_container)
+        list_layout.setContentsMargins(0, 0, 0, 0)
+        list_layout.setSpacing(0)
+        list_layout.addWidget(self.study_list)
+
+        scroll_area.setWidget(list_container)
+        layout.addWidget(scroll_area)
 
     def _on_search_text_changed(self, text: str):
         """Handle search text change with debouncing"""
@@ -224,35 +244,169 @@ class SearchableStudyListWidget(QWidget):
         self.search_input.setText(text)
 
 
-class QueueListWidget(QListWidget):
-    """Custom widget for displaying queued studies"""
+class StudyQueueWidget(QWidget):
+    """Widget for managing queued studies with examination results"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("QueueList")
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.queued_studies: List[QueuedStudy] = []
+        self._setup_ui()
 
-        # FIXED: Add proper height and scroll for queue too
-        self.setMaximumHeight(120)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(8)
 
-    def add_instance(self, instance_id: str, display_text: str):
-        """Add an instance to the queue"""
-        item = QListWidgetItem(display_text)
-        item.setData(Qt.ItemDataRole.UserRole, instance_id)
-        self.addItem(item)
+        # Queue header with count
+        header_layout = QHBoxLayout()
 
-    def get_all_instance_ids(self) -> List[str]:
-        """Get all instance IDs in the queue"""
-        instance_ids = []
-        for i in range(self.count()):
-            item = self.item(i)
-            if item:
-                instance_id = item.data(Qt.ItemDataRole.UserRole)
-                if instance_id:
-                    instance_ids.append(instance_id)
-        return instance_ids
+        self.queue_label = QLabel("📤 Queue")
+        self.queue_label.setObjectName("SectionTitle")
+
+        self.queue_count_label = QLabel("(0 studii)")
+        self.queue_count_label.setStyleSheet("color: #6b7280; font-size: 12px;")
+
+        self.clear_queue_button = QPushButton("🗑️ Clear")
+        self.clear_queue_button.setObjectName("ClearSearchButton")
+        self.clear_queue_button.setMaximumWidth(60)
+        self.clear_queue_button.setMaximumHeight(25)
+        self.clear_queue_button.clicked.connect(self.clear_queue)
+
+        header_layout.addWidget(self.queue_label)
+        header_layout.addWidget(self.queue_count_label)
+        header_layout.addStretch()
+        header_layout.addWidget(self.clear_queue_button)
+
+        layout.addLayout(header_layout)
+
+        # Queue list
+        self.queue_list = QListWidget()
+        self.queue_list.setObjectName("QueueList")
+        self.queue_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.queue_list.setMaximumHeight(120)
+        self.queue_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        # Context menu for queue items
+        self.queue_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.queue_list.customContextMenuRequested.connect(self._show_queue_context_menu)
+
+        layout.addWidget(self.queue_list)
+
+    def add_study_to_queue(self, study_id: str, display_text: str, examination_result: str,
+                           patient_name: str, study_date: str, description: str) -> bool:
+        """Add a study with examination result to the queue"""
+
+        # Check if study is already in queue
+        for queued_study in self.queued_studies:
+            if queued_study.study_id == study_id:
+                return False  # Already in queue
+
+        # Create queued study object
+        queued_study = QueuedStudy(
+            study_id=study_id,
+            display_text=display_text,
+            examination_result=examination_result,
+            patient_name=patient_name,
+            study_date=study_date,
+            description=description
+        )
+
+        # Add to internal list
+        self.queued_studies.append(queued_study)
+
+        # Add to visual list
+        result_preview = examination_result[:50] + "..." if len(examination_result) > 50 else examination_result
+        item_text = f"{display_text}\n📝 {result_preview}" if examination_result else f"{display_text}\n📝 (fără rezultat)"
+
+        item = QListWidgetItem(item_text)
+        item.setData(Qt.ItemDataRole.UserRole, study_id)
+        item.setToolTip(f"Studiu: {display_text}\nRezultat: {examination_result}")
+        self.queue_list.addItem(item)
+
+        self._update_queue_count()
+        return True
+
+    def remove_study_from_queue(self, study_id: str) -> bool:
+        """Remove a study from the queue"""
+        # Remove from internal list
+        self.queued_studies = [qs for qs in self.queued_studies if qs.study_id != study_id]
+
+        # Remove from visual list
+        for i in range(self.queue_list.count()):
+            item = self.queue_list.item(i)
+            if item and item.data(Qt.ItemDataRole.UserRole) == study_id:
+                self.queue_list.takeItem(i)
+                break
+
+        self._update_queue_count()
+        return True
+
+    def get_queued_studies(self) -> List[QueuedStudy]:
+        """Get all queued studies"""
+        return self.queued_studies.copy()
 
     def clear_queue(self):
-        """Clear the queue"""
-        self.clear()
+        """Clear all studies from queue"""
+        self.queued_studies.clear()
+        self.queue_list.clear()
+        self._update_queue_count()
+
+    def is_study_in_queue(self, study_id: str) -> bool:
+        """Check if a study is already in the queue"""
+        return any(qs.study_id == study_id for qs in self.queued_studies)
+
+    def get_queue_count(self) -> int:
+        """Get number of studies in queue"""
+        return len(self.queued_studies)
+
+    def _update_queue_count(self):
+        """Update the queue count label"""
+        count = len(self.queued_studies)
+        self.queue_count_label.setText(f"({count} studii)" if count != 1 else "(1 studiu)")
+
+    def _show_queue_context_menu(self, position):
+        """Show context menu for queue items"""
+        item = self.queue_list.itemAt(position)
+        if item:
+            from PyQt6.QtWidgets import QMenu
+            from PyQt6.QtGui import QAction
+
+            menu = QMenu(self)
+
+            remove_action = QAction("🗑️ Elimină din queue", self)
+            remove_action.triggered.connect(lambda: self._remove_selected_item())
+            menu.addAction(remove_action)
+
+            view_result_action = QAction("👁️ Vezi rezultatul", self)
+            view_result_action.triggered.connect(lambda: self._view_result_for_item(item))
+            menu.addAction(view_result_action)
+
+            menu.exec(self.queue_list.mapToGlobal(position))
+
+    def _remove_selected_item(self):
+        """Remove currently selected item from queue"""
+        current_item = self.queue_list.currentItem()
+        if current_item:
+            study_id = current_item.data(Qt.ItemDataRole.UserRole)
+            self.remove_study_from_queue(study_id)
+
+    def _view_result_for_item(self, item):
+        """Show the examination result for a queue item"""
+        study_id = item.data(Qt.ItemDataRole.UserRole)
+        queued_study = next((qs for qs in self.queued_studies if qs.study_id == study_id), None)
+
+        if queued_study:
+            from PyQt6.QtWidgets import QMessageBox, QTextEdit, QVBoxLayout, QDialog
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle(f"Rezultat explorare - {queued_study.patient_name}")
+            dialog.setModal(True)
+            dialog.resize(500, 300)
+
+            layout = QVBoxLayout(dialog)
+
+            result_text = QTextEdit()
+            result_text.setPlainText(queued_study.examination_result)
+            result_text.setReadOnly(True)
+            layout.addWidget(result_text)
+
+            dialog.exec()

@@ -23,6 +23,14 @@ class HttpClient:
         except requests.exceptions.RequestException as e:
             raise PacsConnectionError(f"HTTP POST failed: {e}")
 
+    def delete(self, url: str, auth: Optional[tuple] = None, headers: Optional[Dict[str, str]] = None):
+        try:
+            response = requests.delete(url, auth=auth, headers=headers, timeout=self.timeout)
+            self._validate_response(response)
+            return response
+        except requests.exceptions.RequestException as e:
+            raise PacsConnectionError(f"HTTP DELETE failed: {e}")
+
     def _validate_response(self, response):
         if response.status_code == 200:
             return

@@ -576,8 +576,6 @@ QPushButton#ClearSearchButton {
     font-weight: bold;
     padding: 8px;
     margin: 0;
-    min-width: 30px;
-    max-width: 30px;
     min-height: 30px;
     max-height: 30px;
 }
@@ -616,4 +614,29 @@ QWidget#SearchContainer {
     border-radius: 8px;
     padding: 12px;
     margin: 4px 0;
+}
+
+/* DIRECT STUDY LIST SCROLLBAR STYLING */
+QListWidget#StudyList QScrollBar:vertical {
+    background: #f8fafc;
+    width: 12px;
+    border-radius: 6px;
+    margin: 2px 0;
+}
+
+QListWidget#StudyList QScrollBar::handle:vertical {
+    background: #cbd5e1;
+    border-radius: 6px;
+    min-height: 30px;
+}
+
+QListWidget#StudyList QScrollBar::handle:vertical:hover {
+    background: #94a3b8;
+}
+
+QListWidget#StudyList QScrollBar::add-line,
+QListWidget#StudyList QScrollBar::sub-line {
+    height: 0px;
+    background: none;
+    border: none;
 }

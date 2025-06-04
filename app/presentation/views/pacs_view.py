@@ -2,12 +2,12 @@ import os
 import subprocess
 import sys
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+    QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar, QScrollArea, QSizePolicy
 )
 from PyQt6.QtCore import QThread, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
-from app.presentation.controllers.pacs_controller import PacsController, StudiesWorker
-from app.presentation.widgets.study_list_widget import SearchableStudyListWidget, QueueListWidget
+from app.presentation.controllers.pacs_controller import PacsController, StudiesWorker, QueueSenderWorker
+from app.presentation.widgets.study_list_widget import SearchableStudyListWidget, StudyQueueWidget
 from app.presentation.widgets.metadata_widget import MetadataWidget, ResultWidget
 from app.services.notification_service import NotificationService
 from app.presentation.styles.style_manager import load_style
@@ -29,110 +29,148 @@ class PacsView(QWidget):
         self._load_studies()
 
     def _setup_ui(self):
-        # Main layout with better spacing
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(6)
-        main_layout.setContentsMargins(8, 8, 8, 8)
+        # Scrollable container setup
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
 
-        # Compact header
+        scroll_container = QWidget()
+        scroll_layout = QVBoxLayout(scroll_container)
+        scroll_layout.setSpacing(8)
+        scroll_layout.setContentsMargins(12, 12, 12, 12)
+
+        # Header
         header_layout = QHBoxLayout()
         studies_label = QLabel("📋 Available Studies")
         studies_label.setObjectName("SectionTitle")
 
         self.refresh_button = QPushButton("🔄 Refresh")
         self.refresh_button.setMaximumWidth(100)
-        self.refresh_button.setMaximumHeight(30)
+        self.refresh_button.setFixedHeight(30)
         self.refresh_button.clicked.connect(self._load_studies)
 
         header_layout.addWidget(studies_label)
         header_layout.addStretch()
         header_layout.addWidget(self.refresh_button)
-        main_layout.addLayout(header_layout)
+        scroll_layout.addLayout(header_layout)
 
-        # Study list
+        # Study list (no external scroll, it handles scroll internally)
         self.study_list = SearchableStudyListWidget()
         self.study_list.study_selected.connect(self._on_study_selected)
-        self.study_list.setMaximumHeight(250)
-        main_layout.addWidget(self.study_list)
+        self.study_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        scroll_layout.addWidget(self.study_list)
 
-        # Horizontal layout for metadata and queue
+        # Metadata and Queue
         middle_layout = QHBoxLayout()
+        middle_layout.setSpacing(12)
 
-        # Left: Metadata (compact)
+        # Metadata section
         left_col = QVBoxLayout()
-        metadata_label = QLabel("📊 Metadata")
+        metadata_label = QLabel("📊 Study Metadata")
         metadata_label.setObjectName("SectionTitle")
         left_col.addWidget(metadata_label)
 
         self.metadata_widget = MetadataWidget()
-        self.metadata_widget.setMaximumHeight(150)  # Limit height
+        self.metadata_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         left_col.addWidget(self.metadata_widget)
 
-        # Right: Queue (compact)
+        # Queue section
         right_col = QVBoxLayout()
-        queue_label = QLabel("📤 Queue")
+        queue_label = QLabel("📥 Study Queue")
         queue_label.setObjectName("SectionTitle")
         right_col.addWidget(queue_label)
 
-        self.queue_list = QueueListWidget()
-        self.queue_list.setMaximumHeight(120)  # Limit height
-        right_col.addWidget(self.queue_list)
+        self.queue_widget = StudyQueueWidget()
+        self.queue_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        right_col.addWidget(self.queue_widget)
 
-        middle_layout.addLayout(left_col)
-        middle_layout.addLayout(right_col)
-        main_layout.addLayout(middle_layout)
+        left_widget = QWidget()
+        left_widget.setLayout(left_col)
+        right_widget = QWidget()
+        right_widget.setLayout(right_col)
 
-        # Results section (compact)
-        results_label = QLabel("📝 Results")
+        middle_layout.addWidget(left_widget, 1)
+        middle_layout.addWidget(right_widget, 1)
+        scroll_layout.addLayout(middle_layout)
+
+        # Results section
+        results_label = QLabel("📝 Examination Results")
         results_label.setObjectName("SectionTitle")
-        main_layout.addWidget(results_label)
+        scroll_layout.addWidget(results_label)
 
         self.result_widget = ResultWidget()
-        self.result_widget.setMaximumHeight(100)  # Limit height
-        main_layout.addWidget(self.result_widget)
+        self.result_widget.setMinimumHeight(200)
+        self.result_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        scroll_layout.addWidget(self.result_widget)
 
-        # Compact button layout - single row
+        # Buttons
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(8)
 
         self.preview_button = QPushButton("👁️ Preview")
         self.preview_button.setObjectName("PreviewButton")
-        self.preview_button.setMaximumHeight(35)
         self.preview_button.clicked.connect(self._preview_pdf)
 
-        self.generate_pdf_button = QPushButton("💾 Generate PDF")
+        self.generate_pdf_button = QPushButton("💾 Generate")
         self.generate_pdf_button.setObjectName("GeneratePDFButton")
-        self.generate_pdf_button.setMaximumHeight(35)
         self.generate_pdf_button.clicked.connect(self._export_pdf)
 
         self.print_button = QPushButton("🖨️ Print")
         self.print_button.setObjectName("PrintButton")
-        self.print_button.setMaximumHeight(35)
         self.print_button.clicked.connect(self._print_pdf)
 
-        self.queue_button = QPushButton("➕ Load Study")
-        self.queue_button.setObjectName("QueueButton")
-        self.queue_button.setMaximumHeight(35)
-        self.queue_button.clicked.connect(self._queue_studies)
+        self.add_to_queue_button = QPushButton("➕ Add to Queue")
+        self.add_to_queue_button.setObjectName("QueueButton")
+        self.add_to_queue_button.clicked.connect(self._add_study_to_queue)
 
-        self.send_button = QPushButton("🚀 Send to PACS")
-        self.send_button.setObjectName("SendPACSButton")
-        self.send_button.setMaximumHeight(35)
-        self.send_button.clicked.connect(self._send_to_pacs)
+        self.send_queue_button = QPushButton("🚀 Send Queue")
+        self.send_queue_button.setObjectName("SendPACSButton")
+        self.send_queue_button.clicked.connect(self._send_queue_to_pacs)
+
+        all_buttons = [
+            self.preview_button, self.generate_pdf_button, self.print_button,
+            self.add_to_queue_button, self.send_queue_button
+        ]
+
+        for btn in all_buttons:
+            btn.setFixedHeight(35)
+            btn.setMinimumWidth(120)
 
         button_layout.addWidget(self.preview_button)
         button_layout.addWidget(self.generate_pdf_button)
         button_layout.addWidget(self.print_button)
-        button_layout.addWidget(self.queue_button)
-        button_layout.addWidget(self.send_button)
+        button_layout.addSpacing(20)
+        button_layout.addWidget(self.add_to_queue_button)
+        button_layout.addWidget(self.send_queue_button)
+        button_layout.addStretch()
 
-        main_layout.addLayout(button_layout)
+        scroll_layout.addLayout(button_layout)
 
-        # Shortcuts info (compact)
-        shortcuts_label = QLabel("💡 Ctrl+F (Search) • F5 (Refresh) • Esc (Clear)")
-        shortcuts_label.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic;")
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setFixedHeight(20)
+        scroll_layout.addWidget(self.progress_bar)
+
+        # Shortcuts info
+        shortcuts_label = QLabel("💡 Ctrl+F (Search) • F5 (Refresh) • Ctrl+Q (Add Queue) • Ctrl+S (Send) • Esc (Clear)")
+        shortcuts_label.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic; padding: 4px;")
         shortcuts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         shortcuts_label.setMaximumHeight(20)
-        main_layout.addWidget(shortcuts_label)
+        scroll_layout.addWidget(shortcuts_label)
+
+        # Final stretch to consume space if needed
+        scroll_layout.addStretch()
+
+        # Apply scroll container
+        scroll_area.setWidget(scroll_container)
+
+        # Final layout of the widget
+        final_layout = QVBoxLayout(self)
+        final_layout.addWidget(scroll_area)
+        self.setLayout(final_layout)
+
+        # Update buttons state
+        self._update_queue_buttons()
 
     def _setup_shortcuts(self):
         """Setup keyboard shortcuts for improved usability"""
@@ -209,6 +247,7 @@ class PacsView(QWidget):
         try:
             metadata = self._pacs_controller.get_study_metadata(study_id)
             self.metadata_widget.display_metadata(metadata)
+            print(self._pacs_controller.get_examination_result_from_study(study_id))
         except Exception as e:
             self._notification_service.show_error(self, "Error", f"Error loading metadata:\n{e}")
 
@@ -254,51 +293,150 @@ class PacsView(QWidget):
         except Exception as e:
             self._notification_service.show_error(self, "Error", f"Error printing PDF: {e}")
 
-    def _queue_studies(self):
-        """Add study instances to upload queue"""
+    def _add_study_to_queue(self):
+        """Add selected study with examination result to queue"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
-            self._notification_service.show_warning(self, "Warning", "Please select a study.")
+            self._notification_service.show_warning(self, "Atenție", "Selectează un studiu pentru a-l adăuga în queue.")
             return
 
-        try:
-            instances = self._pacs_controller.get_study_instances(study_id)
-            instance_ids = [instance["ID"] for instance in instances]
+        # Check if study is already in queue
+        if self.queue_widget.is_study_in_queue(study_id):
+            self._notification_service.show_warning(
+                self,
+                "Studiu deja în queue",
+                "Acest studiu este deja în queue pentru trimitere."
+            )
+            return
 
-            if not instance_ids:
-                self._notification_service.show_warning(self, "Warning", "No DICOM files in study.")
+        # Validate study
+        is_valid, metadata = self._pacs_controller.validate_study_for_queue(study_id, self)
+        if not is_valid:
+            return
+
+        # Get examination result
+        examination_result = self.result_widget.get_result_text()
+
+        if not examination_result.strip():
+            proceed = self._notification_service.ask_confirmation(
+                self,
+                "Rezultat lipsă",
+                "Nu există rezultat al explorării introdus.\n\n"
+                "Vrei să adaugi studiul în queue fără rezultat?"
+            )
+            if not proceed:
                 return
 
-            metadata = self._pacs_controller.get_study_metadata(study_id)
-            display_text = f"{metadata['Patient Name']} - {metadata['Study Date']} - {metadata['Description']}"
+        # Add to queue
+        patient_name = metadata.get("Patient Name", "Unknown")
+        study_date = metadata.get("Study Date", "Unknown")
+        description = metadata.get("Description", "Unknown")
+        display_text = f"{patient_name} - {study_date} - {description}"
 
-            added_count = 0
-            for idx, instance_id in enumerate(instance_ids):
-                try:
-                    # Verify instance can be retrieved
-                    self._pacs_controller._pacs_service.get_dicom_file(instance_id)
-
-                    item_text = f"{display_text} (Instance #{idx + 1})"
-                    self.queue_list.add_instance(instance_id, item_text)
-                    added_count += 1
-
-                except Exception as e:
-                    self._notification_service.show_warning(self, "Warning", f"Error with instance {instance_id}: {e}")
-
-            self._notification_service.show_info(self, "Info", f"{added_count} files added to queue.")
-
-        except Exception as e:
-            self._notification_service.show_error(self, "Error", f"Error adding files to queue: {e}")
-
-    def _send_to_pacs(self):
-        """Send queued studies to target PACS"""
-        instance_ids = self.queue_list.get_all_instance_ids()
-
-        success = self._pacs_controller.send_to_pacs(
-            instance_ids,
-            self._settings.PACS_URL_2,
-            self
+        success = self.queue_widget.add_study_to_queue(
+            study_id,
+            display_text,
+            examination_result,
+            patient_name,
+            study_date,
+            description
         )
 
         if success:
-            self.queue_list.clear_queue()
+            message = f"Studiul '{patient_name}' a fost adăugat în queue."
+            if examination_result.strip():
+                message += f"\nRezultatul explorării ({len(examination_result)} caractere) a fost atașat."
+            else:
+                message += "\nStudiul a fost adăugat fără rezultat al explorării."
+
+            self._notification_service.show_info(self, "Studiu adăugat", message)
+
+            # Update queue buttons
+            self._update_queue_buttons()
+
+    def _send_queue_to_pacs(self):
+        """Send all queued studies to target PACS"""
+        queued_studies = self.queue_widget.get_queued_studies()
+
+        if not queued_studies:
+            self._notification_service.show_warning(self, "Queue gol", "Nu sunt studii în queue pentru trimitere.")
+            return
+
+        # Show progress and send in background
+        self._show_sending_progress(queued_studies)
+
+    def _show_sending_progress(self, queued_studies):
+        """Show progress dialog while sending studies"""
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.send_queue_button.setEnabled(False)
+        self.send_queue_button.setText("⏳ Trimitere...")
+
+        # Create worker thread
+        self.sender_thread = QThread()
+        self.sender_worker = QueueSenderWorker(
+            self._pacs_controller,
+            queued_studies,
+            self._settings.PACS_URL_2
+        )
+        self.sender_worker.moveToThread(self.sender_thread)
+
+        # Connect signals
+        self.sender_thread.started.connect(self.sender_worker.run)
+        self.sender_worker.progress_updated.connect(self._update_sending_progress)
+        self.sender_worker.sending_completed.connect(self._on_sending_completed)
+
+        # Cleanup
+        self.sender_worker.sending_completed.connect(self.sender_thread.quit)
+        self.sender_worker.sending_completed.connect(self.sender_worker.deleteLater)
+        self.sender_thread.finished.connect(self.sender_thread.deleteLater)
+
+        self.sender_thread.start()
+
+    def _update_sending_progress(self, progress: int, current_study: str):
+        """Update progress bar during sending"""
+        self.progress_bar.setValue(progress)
+        if progress < 100:
+            self.send_queue_button.setText(f"⏳ Trimitere... {current_study}")
+
+    def _on_sending_completed(self, success: bool, message: str):
+        """Handle completion of queue sending"""
+        self.progress_bar.setVisible(False)
+        self.send_queue_button.setEnabled(True)
+        self.send_queue_button.setText("🚀 Send Queue to PACS")
+
+        if success:
+            # Clear queue on success
+            self.queue_widget.clear_queue()
+            self._notification_service.show_info(self, "Trimitere finalizată", message)
+        else:
+            self._notification_service.show_error(self, "Eroare trimitere", message)
+
+        self._update_queue_buttons()
+
+    def _clear_queue(self):
+        """Clear the queue after confirmation"""
+        if self.queue_widget.get_queue_count() == 0:
+            return
+
+        if self._notification_service.ask_confirmation(
+                self,
+                "Confirmă ștergerea",
+                f"Sigur vrei să ștergi toate {self.queue_widget.get_queue_count()} studiile din queue?"
+        ):
+            self.queue_widget.clear_queue()
+            self._notification_service.show_info(self, "Queue șters", "Toate studiile au fost eliminate din queue.")
+            self._update_queue_buttons()
+
+    def _update_queue_buttons(self):
+        """Update queue-related buttons based on queue state"""
+        queue_count = self.queue_widget.get_queue_count()
+        has_studies = queue_count > 0
+
+        self.send_queue_button.setEnabled(has_studies)
+
+        # Update button text with count
+        if has_studies:
+            self.send_queue_button.setText(f"🚀 Send Queue ({queue_count}) to PACS")
+        else:
+            self.send_queue_button.setText("🚀 Send Queue to PACS")
