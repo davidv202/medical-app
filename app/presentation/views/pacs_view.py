@@ -40,10 +40,10 @@ class PacsView(QWidget):
 
         # Header
         header_layout = QHBoxLayout()
-        studies_label = QLabel("📋 Available Studies")
+        studies_label = QLabel("Studii disponibile")
         studies_label.setObjectName("SectionTitle")
 
-        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setMaximumWidth(100)
         self.refresh_button.setFixedHeight(30)
         self.refresh_button.clicked.connect(self._load_studies)
@@ -65,7 +65,7 @@ class PacsView(QWidget):
 
         # Metadata section
         left_col = QVBoxLayout()
-        metadata_label = QLabel("📊 Study Metadata")
+        metadata_label = QLabel("Metadate Studiu")
         metadata_label.setObjectName("SectionTitle")
         left_col.addWidget(metadata_label)
 
@@ -73,15 +73,38 @@ class PacsView(QWidget):
         self.metadata_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         left_col.addWidget(self.metadata_widget)
 
-        # Queue section
+        # Queue section with buttons
         right_col = QVBoxLayout()
-        queue_label = QLabel("📥 Study Queue")
+        queue_label = QLabel("Coada de studii")
         queue_label.setObjectName("SectionTitle")
         right_col.addWidget(queue_label)
 
         self.queue_widget = StudyQueueWidget()
         self.queue_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         right_col.addWidget(self.queue_widget)
+
+        # Queue buttons (moved under queue widget)
+        queue_buttons_layout = QHBoxLayout()
+        queue_buttons_layout.setSpacing(8)
+
+        self.add_to_queue_button = QPushButton("+ Adauga in coada")
+        self.add_to_queue_button.setObjectName("QueueButton")
+        self.add_to_queue_button.clicked.connect(self._add_study_to_queue)
+
+        self.send_queue_button = QPushButton("Trimite")
+        self.send_queue_button.setObjectName("SendPACSButton")
+        self.send_queue_button.clicked.connect(self._send_queue_to_pacs)
+
+        # Set button sizes for queue buttons
+        for btn in [self.add_to_queue_button, self.send_queue_button]:
+            btn.setFixedHeight(35)
+            btn.setMinimumWidth(120)
+
+        queue_buttons_layout.addWidget(self.add_to_queue_button)
+        queue_buttons_layout.addWidget(self.send_queue_button)
+        queue_buttons_layout.addStretch()
+
+        right_col.addLayout(queue_buttons_layout)
 
         left_widget = QWidget()
         left_widget.setLayout(left_col)
@@ -93,7 +116,7 @@ class PacsView(QWidget):
         scroll_layout.addLayout(middle_layout)
 
         # Results section
-        results_label = QLabel("📝 Examination Results")
+        results_label = QLabel("Rezultatul explorarii")
         results_label.setObjectName("SectionTitle")
         scroll_layout.addWidget(results_label)
 
@@ -102,46 +125,33 @@ class PacsView(QWidget):
         self.result_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         scroll_layout.addWidget(self.result_widget)
 
-        # Buttons
+        # PDF Buttons (aligned to the right)
         button_layout = QHBoxLayout()
         button_layout.setSpacing(8)
 
-        self.preview_button = QPushButton("👁️ Preview")
+        self.preview_button = QPushButton("Previzualizare PDF")
         self.preview_button.setObjectName("PreviewButton")
         self.preview_button.clicked.connect(self._preview_pdf)
 
-        self.generate_pdf_button = QPushButton("💾 Generate")
+        self.generate_pdf_button = QPushButton("Generare PDF")
         self.generate_pdf_button.setObjectName("GeneratePDFButton")
         self.generate_pdf_button.clicked.connect(self._export_pdf)
 
-        self.print_button = QPushButton("🖨️ Print")
+        self.print_button = QPushButton("Print")
         self.print_button.setObjectName("PrintButton")
         self.print_button.clicked.connect(self._print_pdf)
 
-        self.add_to_queue_button = QPushButton("➕ Add to Queue")
-        self.add_to_queue_button.setObjectName("QueueButton")
-        self.add_to_queue_button.clicked.connect(self._add_study_to_queue)
+        pdf_buttons = [self.preview_button, self.generate_pdf_button, self.print_button]
 
-        self.send_queue_button = QPushButton("🚀 Send Queue")
-        self.send_queue_button.setObjectName("SendPACSButton")
-        self.send_queue_button.clicked.connect(self._send_queue_to_pacs)
-
-        all_buttons = [
-            self.preview_button, self.generate_pdf_button, self.print_button,
-            self.add_to_queue_button, self.send_queue_button
-        ]
-
-        for btn in all_buttons:
+        for btn in pdf_buttons:
             btn.setFixedHeight(35)
             btn.setMinimumWidth(120)
 
+        # Add stretch to push buttons to the right
+        button_layout.addStretch()
         button_layout.addWidget(self.preview_button)
         button_layout.addWidget(self.generate_pdf_button)
         button_layout.addWidget(self.print_button)
-        button_layout.addSpacing(20)
-        button_layout.addWidget(self.add_to_queue_button)
-        button_layout.addWidget(self.send_queue_button)
-        button_layout.addStretch()
 
         scroll_layout.addLayout(button_layout)
 
@@ -152,7 +162,7 @@ class PacsView(QWidget):
         scroll_layout.addWidget(self.progress_bar)
 
         # Shortcuts info
-        shortcuts_label = QLabel("💡 Ctrl+F (Search) • F5 (Refresh) • Ctrl+Q (Add Queue) • Ctrl+S (Send) • Esc (Clear)")
+        shortcuts_label = QLabel("💡 Ctrl+F (Cautare studiu) • F5 (Refresh) • Ctrl+Q (Adauga in coada) • Esc (Anuleaza Cautarea)")
         shortcuts_label.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic; padding: 4px;")
         shortcuts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         shortcuts_label.setMaximumHeight(20)
@@ -173,7 +183,6 @@ class PacsView(QWidget):
         self._update_queue_buttons()
 
     def _setup_shortcuts(self):
-        """Setup keyboard shortcuts for improved usability"""
         # Ctrl+F to focus search
         search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
         search_shortcut.activated.connect(self.study_list.focus_search)
@@ -195,12 +204,10 @@ class PacsView(QWidget):
         preview_shortcut.activated.connect(self._preview_pdf)
 
     def _clear_search_if_focused(self):
-        """Clear search only if search input has focus"""
         if hasattr(self.study_list, 'search_input') and self.study_list.search_input.hasFocus():
             self.study_list._clear_search()
 
     def _load_studies(self):
-        """Load studies from PACS in background thread"""
         self.study_list.set_loading(True)
         self.refresh_button.setEnabled(False)
         self.refresh_button.setText("⏳ Loading...")
@@ -222,7 +229,6 @@ class PacsView(QWidget):
         self.study_thread.start()
 
     def _on_studies_loaded(self, study_ids):
-        """Handle successful studies loading"""
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
         self.refresh_button.setText("🔄 Refresh")
@@ -236,14 +242,12 @@ class PacsView(QWidget):
                 self._notification_service.show_error(self, "Error", f"Error loading metadata: {e}")
 
     def _on_studies_error(self, error_message):
-        """Handle studies loading error"""
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
         self.refresh_button.setText("🔄 Refresh")
         self._notification_service.show_error(self, "Error", f"Error loading studies:\n{error_message}")
 
     def _on_study_selected(self, study_id: str):
-        """Handle study selection"""
         try:
             metadata = self._pacs_controller.get_study_metadata(study_id)
             self.metadata_widget.display_metadata(metadata)
@@ -252,7 +256,6 @@ class PacsView(QWidget):
             self._notification_service.show_error(self, "Error", f"Error loading metadata:\n{e}")
 
     def _export_pdf(self):
-        """Export study results to PDF"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Warning", "Please select a study.")
@@ -268,7 +271,6 @@ class PacsView(QWidget):
             self.last_generated_pdf_path = self._pacs_controller._last_generated_pdf_path
 
     def _preview_pdf(self):
-        """Preview PDF before saving"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Warning", "Please select a study.")
@@ -278,7 +280,6 @@ class PacsView(QWidget):
         self._pacs_controller.preview_pdf(study_id, result_text, self)
 
     def _print_pdf(self):
-        """Print the last generated PDF"""
         if not self.last_generated_pdf_path or not os.path.exists(self.last_generated_pdf_path):
             self._notification_service.show_warning(self, "Warning", "No PDF to print. Generate a PDF first.")
             return
@@ -294,13 +295,11 @@ class PacsView(QWidget):
             self._notification_service.show_error(self, "Error", f"Error printing PDF: {e}")
 
     def _add_study_to_queue(self):
-        """Add selected study with examination result to queue"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Atenție", "Selectează un studiu pentru a-l adăuga în queue.")
             return
 
-        # Check if study is already in queue
         if self.queue_widget.is_study_in_queue(study_id):
             self._notification_service.show_warning(
                 self,

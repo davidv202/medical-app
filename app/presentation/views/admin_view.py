@@ -17,7 +17,7 @@ class AdminView(QWidget):
         super().__init__()
         self._auth_controller = auth_controller
         self._notification_service = NotificationService()
-        self.setWindowTitle("Admin Panel - Medical PACS System")
+        self.setWindowTitle("Admin Panel")
         self.setGeometry(100, 100, 1600, 800)
         self._setup_ui()
         load_style(self)
@@ -67,6 +67,13 @@ class AdminView(QWidget):
 
         main_layout.addWidget(splitter)
 
+        # Shortcuts info la sfârșitul paginii
+        shortcuts_info = QLabel("💡 Shortcuts: Ctrl+F (Cauta Utilizatori) • Esc (Goleste cautarea) • F5 (Refresh)")
+        shortcuts_info.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic; padding: 5px;")
+        shortcuts_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        shortcuts_info.setMaximumHeight(25)
+        main_layout.addWidget(shortcuts_info)
+
     def _create_user_list_section(self):
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -80,14 +87,14 @@ class AdminView(QWidget):
         search_layout = QHBoxLayout()
 
         self.user_search_input = QLineEdit()
-        self.user_search_input.setPlaceholderText("🔍 Caută utilizatori (username, rol)...")
+        self.user_search_input.setPlaceholderText("Caută utilizatori (username)...")
         self.user_search_input.setObjectName("SearchInput")
         self.user_search_input.textChanged.connect(self._filter_users)
 
         self.clear_user_search_button = QPushButton("✕")
         self.clear_user_search_button.setObjectName("ClearSearchButton")
         self.clear_user_search_button.setMaximumWidth(25)
-        self.clear_user_search_button.setToolTip("Șterge căutarea")
+        self.clear_user_search_button.setToolTip("Sterge cautarea")
         self.clear_user_search_button.clicked.connect(self._clear_user_search)
         self.clear_user_search_button.setVisible(False)
 
@@ -123,10 +130,10 @@ class AdminView(QWidget):
         # User actions
         user_actions_layout = QHBoxLayout()
 
-        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button = QPushButton("Refresh")
         self.refresh_button.clicked.connect(self._load_users)
 
-        self.delete_user_button = QPushButton("🗑️ Sterge user")
+        self.delete_user_button = QPushButton("Sterge user")
         self.delete_user_button.clicked.connect(self._delete_user)
         self.delete_user_button.setEnabled(False)
 
@@ -139,7 +146,6 @@ class AdminView(QWidget):
         return widget
 
     def _filter_users(self, text: str):
-        """Filter users based on username only"""
         self.clear_user_search_button.setVisible(bool(text.strip()))
 
         if not text.strip():
@@ -173,19 +179,16 @@ class AdminView(QWidget):
         self.user_results_label.setVisible(True)
 
     def _show_all_users(self):
-        """Show all users (remove filtering)"""
         for row in range(self.users_table.rowCount()):
             self.users_table.setRowHidden(row, False)
         self.user_results_label.setVisible(False)
 
     def _clear_user_search(self):
-        """Clear user search"""
         self.user_search_input.clear()
         self.clear_user_search_button.setVisible(False)
         self._show_all_users()
 
     def _setup_user_search_shortcuts(self):
-        """Setup keyboard shortcuts for user search"""
         # Add this to your existing _setup_shortcuts method or create new one
 
         # Ctrl+U to focus user search
@@ -197,11 +200,9 @@ class AdminView(QWidget):
         clear_user_search_shortcut.activated.connect(self._clear_user_search_if_focused)
 
     def _focus_user_search(self):
-        """Focus user search input"""
         self.user_search_input.setFocus()
 
     def _clear_user_search_if_focused(self):
-        """Clear user search only if search input has focus"""
         if self.user_search_input.hasFocus():
             self._clear_user_search()
 
@@ -251,25 +252,7 @@ class AdminView(QWidget):
         form_buttons_layout.addWidget(self.create_button)
 
         layout.addLayout(form_buttons_layout)
-
-        # System info section
-        info_group = QGroupBox("Informatii sistem")
-        info_layout = QVBoxLayout(info_group)
-
-        self.system_info = QTextEdit()
-        self.system_info.setReadOnly(True)
-        self.system_info.setMaximumHeight(200)
-
-        info_layout.addWidget(self.system_info)
-        layout.addWidget(info_group)
-
         layout.addStretch()
-
-        shortcuts_info = QLabel("💡 Shortcuts: Ctrl+F (Search Users) • Esc (Clear Search) • F5 (Refresh)")
-        shortcuts_info.setStyleSheet("color: #6b7280; font-size: 10px; font-style: italic; padding: 5px;")
-        shortcuts_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        shortcuts_info.setMaximumHeight(25)
-        layout.addWidget(shortcuts_info)
 
         layout.addStretch()
 
@@ -348,7 +331,7 @@ class AdminView(QWidget):
             return
 
         if password != confirm_password:
-            self._notification_service.show_warning(self, "Validation Error", "Passwords do not match")
+            self._notification_service.show_warning(self, "Validation Error", "Parolele sunt diferite.")
             return
 
         try:
@@ -374,7 +357,7 @@ class AdminView(QWidget):
             self._load_users()
 
         except Exception as e:
-            self._notification_service.show_error(self, "Error", f"Failed to create user: {e}")
+            self._notification_service.show_error(self, "Error", f"Nu s-a putut crea utilizatorul nou: {e}")
 
     def _clear_form(self):
         self.username_input.clear()
