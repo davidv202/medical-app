@@ -14,3 +14,5 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
+    last_name = Column(String(255), nullable=False)
+    first_name = Column(String(255), nullable=False)

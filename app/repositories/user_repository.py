@@ -40,7 +40,9 @@ class UserRepository(BaseRepository[User], IUserRepository):
             user_model = UserModel(
                 username=user.username,
                 password=user.password,
-                role=RoleEnum(user.role.value)
+                role=RoleEnum(user.role.value),
+                first_name=user.first_name,
+                last_name=user.last_name
             )
 
             session.add(user_model)
@@ -64,6 +66,8 @@ class UserRepository(BaseRepository[User], IUserRepository):
             user_model.username = user.username
             user_model.password = user.password
             user_model.role = RoleEnum(user.role.value)
+            user_model.first_name = user.first_name
+            user_model.last_name = user.last_name
 
             session.commit()
             session.refresh(user_model)
@@ -104,5 +108,7 @@ class UserRepository(BaseRepository[User], IUserRepository):
             id=user_model.id,
             username=user_model.username,
             password=user_model.password,
-            role=UserRole(user_model.role.value)
+            role=UserRole(user_model.role.value),
+            first_name=user_model.first_name,
+            last_name=user_model.last_name
         )

@@ -12,15 +12,15 @@ class PdfService(IPdfService):
         self._output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
 
-    def generate_pdf(self, content: str, metadata: Dict[str, Any], output_path: str) -> str:
+    def generate_pdf(self, content: str, metadata: Dict[str, Any], output_path: str, doctor_name: str = None) -> str:
         try:
             full_path = os.path.join(self._output_dir, output_path)
-            self._pdf_generator.create_pdf(content, metadata, full_path)
+            self._pdf_generator.create_pdf(content, metadata, full_path, doctor_name)
             return full_path
         except Exception as e:
             raise PdfGenerationError(f"Nu am putut genera fisierul PDF: {e}")
 
-    def preview_pdf(self, content: str, metadata: Dict[str, Any]) -> str:
+    def preview_pdf(self, content: str, metadata: Dict[str, Any], doctor_name: str = None) -> str:
         try:
             preview_dir = os.path.join("tmp_pdfs", "preview")
             os.makedirs(preview_dir, exist_ok=True)
@@ -28,7 +28,7 @@ class PdfService(IPdfService):
             filename = f"preview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             preview_path = os.path.join(preview_dir, filename)
 
-            self._pdf_generator.create_pdf(content, metadata, preview_path)
+            self._pdf_generator.create_pdf(content, metadata, preview_path, doctor_name)
             return preview_path
         except Exception as e:
             raise PdfGenerationError(f"Nu am putut genera fisierul PDF pentru previzualizare: {e}")

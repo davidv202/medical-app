@@ -59,7 +59,7 @@ class MainView(QWidget):
 
         # Pages
         self.pages = QStackedWidget()
-        self.pacs_page = PacsView(self._pacs_controller)
+        self.pacs_page = PacsView(self._pacs_controller, self._auth_controller)
         self.patients_page = PatientsView()
 
         self.pages.addWidget(self.pacs_page)

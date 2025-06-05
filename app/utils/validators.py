@@ -20,3 +20,12 @@ class Validators:
         if len(password) < 6:
             return "Password must be at least 6 characters long"
         return None
+
+    @staticmethod
+    def validate_name(name: str, field_name: str) -> Optional[str]:
+        if name and len(name.strip()) > 0:
+            if len(name.strip()) > 100:
+                return f"{field_name} trebuie să aibă mai puțin de 100 de caractere"
+            if not re.match(r'^[a-zA-ZăâîșțĂÂÎȘȚ\s-]+$', name.strip()):
+                return f"{field_name} poate conține doar litere, spații și liniuțe"
+        return None

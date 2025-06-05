@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QThread, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
+
+from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.pacs_controller import PacsController, StudiesWorker, QueueSenderWorker
 from app.presentation.widgets.study_list_widget import SearchableStudyListWidget, StudyQueueWidget
 from app.presentation.widgets.metadata_widget import MetadataWidget, ResultWidget
@@ -15,9 +17,10 @@ from app.config.settings import Settings
 
 
 class PacsView(QWidget):
-    def __init__(self, pacs_controller: PacsController):
+    def __init__(self, pacs_controller: PacsController, auth_controller: AuthController):
         super().__init__()
         self._pacs_controller = pacs_controller
+        self._auth_controller = auth_controller
         self._notification_service = NotificationService()
         self._settings = Settings()
         self.last_generated_pdf_path = None
@@ -266,7 +269,9 @@ class PacsView(QWidget):
             self._notification_service.show_warning(self, "Warning", "Please enter examination results.")
             return
 
-        success = self._pacs_controller.export_pdf(study_id, result_text, self)
+        current_user = self._auth_controller.get_current_user() if self._auth_controller else None
+
+        success = self._pacs_controller.export_pdf(study_id, result_text, self, current_user)
         if success:
             self.last_generated_pdf_path = self._pacs_controller._last_generated_pdf_path
 
@@ -277,7 +282,10 @@ class PacsView(QWidget):
             return
 
         result_text = self.result_widget.get_result_text()
-        self._pacs_controller.preview_pdf(study_id, result_text, self)
+
+        current_user = self._auth_controller.get_current_user() if self._auth_controller else None
+
+        self._pacs_controller.preview_pdf(study_id, result_text, self, current_user)
 
     def _print_pdf(self):
         if not self.last_generated_pdf_path or not os.path.exists(self.last_generated_pdf_path):

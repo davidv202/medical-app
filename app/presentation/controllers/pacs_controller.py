@@ -38,7 +38,7 @@ class PacsController:
         except PacsDataError as e:
             raise e
 
-    def export_pdf(self, study_id: str, result_text: str, parent_widget) -> bool:
+    def export_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
         try:
             metadata = self.get_study_metadata(study_id)
 
@@ -47,7 +47,9 @@ class PacsController:
             timestamp = datetime.now().strftime("%H%M%S")
             filename = f"{patient}_{study_date}_{timestamp}.pdf"
 
-            pdf_path = self._pdf_service.generate_pdf(result_text, metadata, filename)
+            doctor_name = current_user.get_full_name() if current_user else None
+
+            pdf_path = self._pdf_service.generate_pdf(result_text, metadata, filename, doctor_name)
             self._last_generated_pdf_path = pdf_path
 
             self._notification_service.show_info(parent_widget, "Succes", f"Fisier PDF salvat: {filename}")
@@ -57,14 +59,15 @@ class PacsController:
             self._notification_service.show_error(parent_widget, "Eroare", str(e))
             return False
 
-    def preview_pdf(self, study_id: str, result_text: str, parent_widget) -> bool:
+    def preview_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
         try:
             if not result_text.strip():
                 self._notification_service.show_warning(parent_widget, "Atentie", "Completeaza rezultatul explorarii.")
                 return False
 
             metadata = self.get_study_metadata(study_id)
-            preview_path = self._pdf_service.preview_pdf(result_text, metadata)
+            doctor_name = current_user.get_full_name() if current_user else None
+            preview_path = self._pdf_service.preview_pdf(result_text, metadata, doctor_name)
 
             import sys
             import subprocess

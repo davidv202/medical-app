@@ -87,7 +87,7 @@ class AdminView(QWidget):
         search_layout = QHBoxLayout()
 
         self.user_search_input = QLineEdit()
-        self.user_search_input.setPlaceholderText("Caută utilizatori (username)...")
+        self.user_search_input.setPlaceholderText("Caută utilizatori (username sau nume)...")
         self.user_search_input.setObjectName("SearchInput")
         self.user_search_input.textChanged.connect(self._filter_users)
 
@@ -110,17 +110,11 @@ class AdminView(QWidget):
 
         # Users table
         self.users_table = QTableWidget()
-        self.users_table.setColumnCount(3)
-        self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Rol"])
+        self.users_table.setColumnCount(4)  # Modificat de la 3 la 4
+        self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Nume Complet", "Rol"])
         self.users_table.verticalHeader().setVisible(False)
         self.users_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.users_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        # Set column widths
-        header = self.users_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
 
         # Connect selection change
         self.users_table.itemSelectionChanged.connect(self._on_user_selected)
@@ -152,17 +146,19 @@ class AdminView(QWidget):
             self._show_all_users()
             return
 
-        # Filter users in table by username only
+        # Filter users in table by username and full name
         visible_count = 0
         total_count = self.users_table.rowCount()
 
         for row in range(total_count):
             username_item = self.users_table.item(row, 1)  # Username column
+            fullname_item = self.users_table.item(row, 2)  # Full name column
 
-            # Check if search text matches username only
+            # Check if search text matches username or full name
             username_match = text.lower() in username_item.text().lower() if username_item else False
+            fullname_match = text.lower() in fullname_item.text().lower() if fullname_item else False
 
-            if username_match:
+            if username_match or fullname_match:
                 self.users_table.setRowHidden(row, False)
                 visible_count += 1
             else:
@@ -170,7 +166,7 @@ class AdminView(QWidget):
 
         # Update results info
         if visible_count == 0:
-            self.user_results_label.setText(f"Nu s-au găsit utilizatori cu username-ul '{text}'")
+            self.user_results_label.setText(f"Nu s-au găsit utilizatori pentru '{text}'")
             self.user_results_label.setStyleSheet("color: #dc2626; font-size: 11px; padding: 2px;")
         else:
             self.user_results_label.setText(f"Găsiți {visible_count} din {total_count} utilizatori")
@@ -218,6 +214,15 @@ class AdminView(QWidget):
         self.username_input.setObjectName("UsernameInput")
         self.username_input.setPlaceholderText("Introdu username")
 
+        # Adaugă câmpurile pentru nume și prenume
+        self.first_name_input = QLineEdit()
+        self.first_name_input.setObjectName("UsernameInput")  # Folosește același stil
+        self.first_name_input.setPlaceholderText("Introdu prenumele")
+
+        self.last_name_input = QLineEdit()
+        self.last_name_input.setObjectName("UsernameInput")  # Folosește același stil
+        self.last_name_input.setPlaceholderText("Introdu numele de familie")
+
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setObjectName("PasswordInput")
@@ -232,6 +237,8 @@ class AdminView(QWidget):
         self.role_input.addItems([role.value for role in UserRole])
 
         form_layout.addRow("Username:", self.username_input)
+        form_layout.addRow("Prenume:", self.first_name_input)
+        form_layout.addRow("Nume familie:", self.last_name_input)
         form_layout.addRow("Parola:", self.password_input)
         form_layout.addRow("Confirma parola:", self.confirm_password_input)
         form_layout.addRow("Rol:", self.role_input)
@@ -254,8 +261,6 @@ class AdminView(QWidget):
         layout.addLayout(form_buttons_layout)
         layout.addStretch()
 
-        layout.addStretch()
-
         return widget
 
     def _load_users(self):
@@ -264,12 +269,30 @@ class AdminView(QWidget):
             user_repo = Container.get_user_repository()
             users = user_repo.find_all()
 
+            # Modifică headerul pentru a include numele complet
+            self.users_table.setColumnCount(4)
+            self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Nume Complet", "Rol"])
+
             self.users_table.setRowCount(len(users))
 
             for row, user in enumerate(users):
                 self.users_table.setItem(row, 0, QTableWidgetItem(str(user.id)))
                 self.users_table.setItem(row, 1, QTableWidgetItem(user.username))
-                self.users_table.setItem(row, 2, QTableWidgetItem(user.role.value.title()))
+
+                # Afișează numele complet
+                full_name = ""
+                if user.first_name or user.last_name:
+                    full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+                self.users_table.setItem(row, 2, QTableWidgetItem(full_name))
+
+                self.users_table.setItem(row, 3, QTableWidgetItem(user.role.value.title()))
+
+            # Set column widths
+            header = self.users_table.horizontalHeader()
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
             # Clear search when reloading
             self._clear_user_search()
@@ -315,6 +338,8 @@ class AdminView(QWidget):
 
     def _handle_create_user(self):
         username = self.username_input.text().strip()
+        first_name = self.first_name_input.text().strip()
+        last_name = self.last_name_input.text().strip()
         password = self.password_input.text().strip()
         confirm_password = self.confirm_password_input.text().strip()
         role_value = self.role_input.currentText()
@@ -324,6 +349,19 @@ class AdminView(QWidget):
         if username_error:
             self._notification_service.show_warning(self, "Validation Error", username_error)
             return
+
+        # Validare nume și prenume
+        if first_name:
+            first_name_error = Validators.validate_name(first_name, "Prenumele")
+            if first_name_error:
+                self._notification_service.show_warning(self, "Validation Error", first_name_error)
+                return
+
+        if last_name:
+            last_name_error = Validators.validate_name(last_name, "Numele de familie")
+            if last_name_error:
+                self._notification_service.show_warning(self, "Validation Error", last_name_error)
+                return
 
         password_error = Validators.validate_password(password)
         if password_error:
@@ -347,7 +385,9 @@ class AdminView(QWidget):
                 id=0,
                 username=username,
                 password=hashed_password,
-                role=role
+                role=role,
+                first_name=first_name if first_name else None,
+                last_name=last_name if last_name else None
             )
 
             created_user = user_repo.create(new_user)
@@ -359,8 +399,178 @@ class AdminView(QWidget):
         except Exception as e:
             self._notification_service.show_error(self, "Error", f"Nu s-a putut crea utilizatorul nou: {e}")
 
+    # Modificări pentru AdminView (app/presentation/views/admin_view.py)
+
+    # În metoda _create_user_form_section(), modifică formularul:
+    def _create_user_form_section(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Create user form
+        form_group = QGroupBox("Creeaza user")
+        form_layout = QFormLayout(form_group)
+
+        self.username_input = QLineEdit()
+        self.username_input.setObjectName("UsernameInput")
+        self.username_input.setPlaceholderText("Introdu username")
+
+        # Adaugă câmpurile pentru nume și prenume
+        self.first_name_input = QLineEdit()
+        self.first_name_input.setObjectName("UsernameInput")  # Folosește același stil
+        self.first_name_input.setPlaceholderText("Introdu prenumele")
+
+        self.last_name_input = QLineEdit()
+        self.last_name_input.setObjectName("UsernameInput")  # Folosește același stil
+        self.last_name_input.setPlaceholderText("Introdu numele de familie")
+
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_input.setObjectName("PasswordInput")
+        self.password_input.setPlaceholderText("Introdu parola")
+
+        self.confirm_password_input = QLineEdit()
+        self.confirm_password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.confirm_password_input.setObjectName("PasswordInput")
+        self.confirm_password_input.setPlaceholderText("Confirma parola")
+
+        self.role_input = QComboBox()
+        self.role_input.addItems([role.value for role in UserRole])
+
+        form_layout.addRow("Username:", self.username_input)
+        form_layout.addRow("Prenume:", self.first_name_input)
+        form_layout.addRow("Nume familie:", self.last_name_input)
+        form_layout.addRow("Parola:", self.password_input)
+        form_layout.addRow("Confirma parola:", self.confirm_password_input)
+        form_layout.addRow("Rol:", self.role_input)
+
+        layout.addWidget(form_group)
+
+        # Form buttons
+        form_buttons_layout = QHBoxLayout()
+
+        self.clear_button = QPushButton("Reset")
+        self.clear_button.clicked.connect(self._clear_form)
+
+        self.create_button = QPushButton("Creaza user")
+        self.create_button.setObjectName("CreateButton")
+        self.create_button.clicked.connect(self._handle_create_user)
+
+        form_buttons_layout.addWidget(self.clear_button)
+        form_buttons_layout.addWidget(self.create_button)
+
+        layout.addLayout(form_buttons_layout)
+        layout.addStretch()
+
+        return widget
+
+    # Modifică metoda _load_users pentru a afișa numele complet în tabel:
+    def _load_users(self):
+        try:
+            from app.di.container import Container
+            user_repo = Container.get_user_repository()
+            users = user_repo.find_all()
+
+            # Modifică headerul pentru a include numele complet
+            self.users_table.setColumnCount(4)
+            self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Nume Complet", "Rol"])
+
+            self.users_table.setRowCount(len(users))
+
+            for row, user in enumerate(users):
+                self.users_table.setItem(row, 0, QTableWidgetItem(str(user.id)))
+                self.users_table.setItem(row, 1, QTableWidgetItem(user.username))
+
+                # Afișează numele complet
+                full_name = ""
+                if user.first_name or user.last_name:
+                    full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+                self.users_table.setItem(row, 2, QTableWidgetItem(full_name))
+
+                self.users_table.setItem(row, 3, QTableWidgetItem(user.role.value.title()))
+
+            # Set column widths
+            header = self.users_table.horizontalHeader()
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+
+            # Clear search when reloading
+            self._clear_user_search()
+
+        except Exception as e:
+            self._notification_service.show_error(self, "Eroare",
+                                                  f"Nu s-au putut incarca conturile utilizatorilor: {e}")
+
+    # Modifică metoda _handle_create_user pentru a include numele și prenumele:
+    def _handle_create_user(self):
+        username = self.username_input.text().strip()
+        first_name = self.first_name_input.text().strip()
+        last_name = self.last_name_input.text().strip()
+        password = self.password_input.text().strip()
+        confirm_password = self.confirm_password_input.text().strip()
+        role_value = self.role_input.currentText()
+
+        # Validation
+        username_error = Validators.validate_username(username)
+        if username_error:
+            self._notification_service.show_warning(self, "Validation Error", username_error)
+            return
+
+        # Validare nume și prenume
+        if first_name:
+            first_name_error = Validators.validate_name(first_name, "Prenumele")
+            if first_name_error:
+                self._notification_service.show_warning(self, "Validation Error", first_name_error)
+                return
+
+        if last_name:
+            last_name_error = Validators.validate_name(last_name, "Numele de familie")
+            if last_name_error:
+                self._notification_service.show_warning(self, "Validation Error", last_name_error)
+                return
+
+        password_error = Validators.validate_password(password)
+        if password_error:
+            self._notification_service.show_warning(self, "Validation Error", password_error)
+            return
+
+        if password != confirm_password:
+            self._notification_service.show_warning(self, "Validation Error", "Parolele sunt diferite.")
+            return
+
+        try:
+            from app.di.container import Container
+            auth_service = Container.get_auth_service()
+            user_repo = Container.get_user_repository()
+
+            # Hash password and create user
+            hashed_password = auth_service.hash_password(password)
+            role = UserRole(role_value)
+
+            new_user = User(
+                id=0,
+                username=username,
+                password=hashed_password,
+                role=role,
+                first_name=first_name if first_name else None,
+                last_name=last_name if last_name else None
+            )
+
+            created_user = user_repo.create(new_user)
+
+            self._notification_service.show_info(self, "Succes", f"Utilizatorul '{username}' a fost creat cu succes.")
+            self._clear_form()
+            self._load_users()
+
+        except Exception as e:
+            self._notification_service.show_error(self, "Error", f"Nu s-a putut crea utilizatorul nou: {e}")
+
+    # Modifică metoda _clear_form pentru a include noile câmpuri:
     def _clear_form(self):
         self.username_input.clear()
+        self.first_name_input.clear()
+        self.last_name_input.clear()
         self.password_input.clear()
         self.confirm_password_input.clear()
         self.role_input.setCurrentIndex(0)
