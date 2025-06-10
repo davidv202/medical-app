@@ -12,11 +12,13 @@ from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.services.session_service import SessionService
 from app.services.pacs_service import PacsService
+from app.services.local_file_service import LocalFileService
+from app.services.hybrid_pacs_service import HybridPacsService
 from app.services.pdf_service import PdfService
 
 # Controllers
 from app.presentation.controllers.auth_controller import AuthController
-from app.presentation.controllers.pacs_controller import PacsController
+from app.presentation.controllers.hybrid_pacs_controller import HybridPacsController
 
 
 class Container:
@@ -64,6 +66,20 @@ class Container:
         ))
 
     @classmethod
+    def get_local_file_service(cls) -> LocalFileService:
+        settings = Settings()
+        cache_dir = getattr(settings, 'LOCAL_STUDIES_CACHE_DIR', 'local_studies_cache')
+        return cls._get_or_create('local_file_service', lambda: LocalFileService(cache_dir))
+
+    @classmethod
+    def get_hybrid_pacs_service(cls) -> HybridPacsService:
+        pacs_service = cls.get_pacs_service()
+        local_file_service = cls.get_local_file_service()
+        return cls._get_or_create('hybrid_pacs_service', lambda: HybridPacsService(
+            pacs_service, local_file_service
+        ))
+
+    @classmethod
     def get_pdf_service(cls) -> PdfService:
         pdf_generator = cls.get_pdf_generator()
         return cls._get_or_create('pdf_service', lambda: PdfService(pdf_generator))
@@ -75,7 +91,42 @@ class Container:
         return cls._get_or_create('auth_controller', lambda: AuthController(auth_service, session_service))
 
     @classmethod
-    def get_pacs_controller(cls) -> PacsController:
-        pacs_service = cls.get_pacs_service()
+    def get_pacs_controller(cls) -> HybridPacsController:
+        # Use hybrid PACS service instead of regular PACS service
+        hybrid_pacs_service = cls.get_hybrid_pacs_service()
         pdf_service = cls.get_pdf_service()
-        return cls._get_or_create('pacs_controller', lambda: PacsController(pacs_service, pdf_service))
+        return cls._get_or_create('hybrid_pacs_controller', lambda: HybridPacsController(
+            hybrid_pacs_service, pdf_service
+        ))
+
+    # Backward compatibility methods
+    @classmethod
+    def get_hybrid_pacs_controller(cls) -> HybridPacsController:
+        """Alias for get_pacs_controller to be explicit about hybrid functionality"""
+        return cls.get_pacs_controller()
+
+    @classmethod
+    def reset_instances(cls):
+        """Reset all instances (useful for testing)"""
+        cls._instances.clear()
+
+    @classmethod
+    def get_service_info(cls) -> dict:
+        """Get information about loaded services"""
+        info = {
+            'loaded_services': list(cls._instances.keys()),
+            'local_file_support': 'local_file_service' in cls._instances,
+            'hybrid_pacs_support': 'hybrid_pacs_service' in cls._instances,
+            'pdf_support': 'pdf_service' in cls._instances
+        }
+
+        # Check if pydicom is available
+        try:
+            import pydicom
+            info['pydicom_available'] = True
+            info['pydicom_version'] = getattr(pydicom, '__version__', 'unknown')
+        except ImportError:
+            info['pydicom_available'] = False
+            info['pydicom_version'] = None
+
+        return info

@@ -17,7 +17,7 @@ class Validators:
     def validate_password(password: str) -> Optional[str]:
         if not password:
             return "Password is required"
-        if len(password) < 6:
+        if len(password) < 3:
             return "Password must be at least 6 characters long"
         return None
 

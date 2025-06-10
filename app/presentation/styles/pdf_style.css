@@ -1,16 +1,87 @@
-/* Medical PDF Report Stylesheet - Elegant Doctor Signature */
-/* Professional styling for hospital radiological reports with discrete doctor signature */
+/* Medical PDF Report Stylesheet - Enhanced with Page Footer */
+/* Professional styling for hospital radiological reports with page footers */
 
 @page {
     size: A4;
-    margin: 2cm 1.5cm 4cm 1.5cm; /* Margin jos și mai mare pentru spațiu */
-    @bottom-center {
-        content: "Pagina " counter(page) " din " counter(pages);
-        font-size: 9px;
-        color: #475569;
+    margin: 2cm 1.5cm 3.5cm 1.5cm; /* Margin jos mai mare pentru footer */
+    
+    /* Header pentru fiecare pagină */
+    @top-center {
+        content: "SISTEMUL MEDICAL PACS - DEPARTAMENTUL DE RADIOLOGIE";
+        font-size: 8px;
+        color: #64748b;
+        font-family: 'DejaVu Sans', Arial, sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    
+    /* Footer pentru fiecare pagină */
+    @bottom-left {
+        content: "Document medical autentificat | Generat: " attr(data-generation-date);
+        font-size: 8px;
+        color: #64748b;
         font-family: 'DejaVu Sans', Arial, sans-serif;
         font-weight: 500;
-        margin-top: 15px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    @bottom-center {
+        content: "⚕ CONFIDENȚIAL - Document medical ⚕";
+        font-size: 8px;
+        color: #1e40af;
+        font-family: 'DejaVu Sans', Arial, sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    @bottom-right {
+        content: "Pagina " counter(page) " din " counter(pages);
+        font-size: 8px;
+        color: #64748b;
+        font-family: 'DejaVu Sans', Arial, sans-serif;
+        font-weight: 500;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+}
+
+/* Pagina din față - footer special */
+@page :first {
+    @bottom-left {
+        content: "© " attr(data-current-year) " Sistemul Medical PACS | Document generat automat";
+        font-size: 8px;
+        color: #64748b;
+        font-weight: 500;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    @bottom-center {
+        content: "⚕ RAPORT MEDICAL OFICIAL ⚕";
+        font-size: 9px;
+        color: #1e40af;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    @bottom-right {
+        content: "Pagina " counter(page) " din " counter(pages);
+        font-size: 8px;
+        color: #64748b;
+        font-weight: 500;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
     }
 }
 
@@ -24,16 +95,15 @@ body {
     padding: 0;
     background: white;
     text-align: justify;
-    min-height: calc(100vh - 4cm); /* Ajustează pentru marginea de jos */
 }
 
 /* Main content container */
 .main-content {
-    min-height: calc(100vh - 6cm);
-    padding-bottom: 40px;
+    min-height: calc(100vh - 7cm); /* Ajustat pentru header și footer */
+    padding: 20px 0;
 }
 
-/* Main heading */
+/* Main heading cu margini ajustate */
 h1 {
     font-size: 20px;
     font-weight: bold;
@@ -41,22 +111,26 @@ h1 {
     color: #1e40af;
     margin: 0 0 20px 0;
     padding: 15px 0;
-    border-bottom: 2px solid #e0e7ff;
+    border-bottom: 3px solid #e0e7ff;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 8px;
 }
 
 /* Section headings */
 h2 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: #2c3e50;
-    margin: 25px 0 10px 0;
+    margin: 20px 0 10px 0;
     padding: 8px 0 8px 12px;
     background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
     border-left: 4px solid #1e40af;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border-radius: 0 6px 6px 0;
+    page-break-after: avoid;
 }
 
 /* Generation date styling */
@@ -64,44 +138,49 @@ h2 {
     text-align: right;
     font-size: 11px;
     color: #6c757d;
-    margin: 0 0 20px 0;
+    margin: 0 0 15px 0;
     font-style: italic;
+    font-weight: 500;
 }
 
 /* Section containers */
 .section {
-    margin: 20px 0;
+    margin: 15px 0;
     page-break-inside: avoid;
 }
 
-/* Metadata table styling */
+/* Enhanced metadata table styling - COMPACT */
 .meta-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 10px 0 20px 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin: 8px 0 15px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     overflow: hidden;
+    page-break-inside: avoid;
+    font-size: 11px; /* Smaller font */
 }
 
 .meta-table td {
-    padding: 12px 15px;
+    padding: 8px 12px; /* Reduced padding */
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
     text-align: left;
+    line-height: 1.3; /* Tighter line height */
 }
 
 .meta-table td.label {
-    background: #f8fafc;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     font-weight: 600;
     color: #475569;
-    width: 35%;
-    font-size: 11px;
+    width: 32%; /* Narrower label column */
+    font-size: 10px; /* Even smaller for labels */
     letter-spacing: 0.3px;
     text-align: left;
     vertical-align: middle;
+    text-transform: uppercase;
 }
 
 .meta-table td:not(.label) {
@@ -110,6 +189,7 @@ h2 {
     font-weight: 500;
     text-align: left;
     vertical-align: middle;
+    font-size: 11px;
 }
 
 /* Remove border from last row */
@@ -117,54 +197,57 @@ h2 {
     border-bottom: none;
 }
 
-/* Text block styling for results */
+/* Enhanced text block styling for results - COMPACT */
 .text-block {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    padding: 20px;
-    margin: 15px 0;
+    padding: 15px; /* Reduced padding */
+    margin: 12px 0; /* Reduced margins */
     white-space: pre-wrap;
-    line-height: 1.7;
+    line-height: 1.6; /* Slightly tighter */
     font-size: 12px;
     color: #2c3e50;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    min-height: 80px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    min-height: 60px; /* Smaller min height */
+    page-break-inside: avoid;
 }
 
 /* ELEGANT DOCTOR SIGNATURE STYLING */
 .doctor-signature-container {
-    margin-top: 40px;
-    margin-bottom: 20px;
+    margin-top: 50px;
+    margin-bottom: 30px;
     text-align: right;
     page-break-inside: avoid;
     position: relative;
 }
 
 .doctor-signature-line {
-    width: 180px;
-    height: 1px;
+    width: 200px;
+    height: 2px;
     background: linear-gradient(to right, transparent 0%, #64748b 20%, #64748b 80%, transparent 100%);
-    margin: 0 0 8px auto;
-    opacity: 0.6;
+    margin: 0 0 12px auto;
+    opacity: 0.7;
+    border-radius: 1px;
 }
 
 .doctor-signature-text {
     font-size: 11px;
     color: #475569;
-    line-height: 1.3;
+    line-height: 1.4;
     font-style: italic;
-    margin-right: 10px;
+    margin-right: 15px;
 }
 
 .doctor-name {
     display: block;
-    font-weight: 600;
+    font-weight: 700;
     color: #1e40af;
-    font-size: 12px;
-    margin-bottom: 2px;
+    font-size: 13px;
+    margin-bottom: 4px;
     font-style: normal;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
 }
 
 .doctor-title {
@@ -172,82 +255,24 @@ h2 {
     font-size: 9px;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    opacity: 0.8;
-}
-
-/* Subtle icon before doctor signature */
-.doctor-signature-container::before {
-    content: "⚕";
-    position: absolute;
-    right: 190px;
-    top: -5px;
-    font-size: 12px;
-    color: #64748b;
-    opacity: 0.4;
-}
-
-/* Document footer styling - positioned above page numbering */
-.document-footer {
-    margin-top: 40px;
-    padding: 15px 0 20px 0;
-    border-top: 1px solid #e2e8f0;
-    font-size: 9px;
-    color: #64748b;
-    page-break-inside: avoid;
-    background: rgba(248, 250, 252, 0.3);
-    border-radius: 4px;
-    margin-bottom: 30px; /* Spațiu pentru paginare */
-}
-
-.footer-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0 15px;
-}
-
-.footer-left {
-    text-align: left;
-    line-height: 1.4;
-}
-
-.footer-right {
-    text-align: right;
-    line-height: 1.4;
-}
-
-.footer-title {
+    letter-spacing: 1px;
+    opacity: 0.9;
     font-weight: 600;
-    font-size: 10px;
-    color: #475569;
-    margin-bottom: 3px;
-    letter-spacing: 0.3px;
 }
 
-.footer-subtitle {
-    font-size: 8px;
-    color: #64748b;
-    font-style: italic;
-}
-
-.footer-date {
-    font-size: 9px;
-    color: #475569;
-    margin-bottom: 3px;
-    font-weight: 500;
-}
-
-.footer-system {
-    font-size: 8px;
-    color: #64748b;
-    font-style: italic;
-}
-
-/* Remove spacer - not needed anymore */
-.content-spacer {
-    display: none;
+/* Document authenticity watermark */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(30, 64, 175, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(30, 64, 175, 0.02) 0%, transparent 50%);
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* Print-specific adjustments */
@@ -259,10 +284,14 @@ h2 {
 
     .section {
         page-break-inside: avoid;
+        orphans: 3;
+        widows: 3;
     }
 
     h1, h2 {
         page-break-after: avoid;
+        orphans: 3;
+        widows: 3;
     }
 
     .meta-table {
@@ -271,53 +300,44 @@ h2 {
 
     .doctor-signature-container {
         page-break-inside: avoid;
-        margin-bottom: 20px;
+        margin-bottom: 40px;
     }
 
-    .document-footer {
+    .text-block {
         page-break-inside: avoid;
-        margin-bottom: 40px; /* Mai mult spațiu pentru paginare */
+        orphans: 4;
+        widows: 4;
     }
 
-    /* Asigură separarea clară între footer și paginare */
+    /* Ensure footer space */
     @page {
-        margin-bottom: 4.5cm;
-        @bottom-center {
-            margin-top: 25px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-        }
+        margin-bottom: 4cm;
     }
 }
 
 /* Enhanced typography for medical context */
 strong, b {
-    font-weight: 600;
+    font-weight: 700;
     color: #1e40af;
+}
+
+em, i {
+    font-style: italic;
+    color: #64748b;
 }
 
 /* Medical report specific styling */
 .text-block p {
-    margin: 0 0 10px 0;
+    margin: 0 0 12px 0;
+    text-indent: 0;
 }
 
 .text-block p:last-child {
     margin-bottom: 0;
 }
 
-/* Subtle background pattern for authenticity */
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image:
-        radial-gradient(circle at 20% 20%, rgba(30, 64, 175, 0.01) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(30, 64, 175, 0.01) 0%, transparent 50%);
-    z-index: -1;
-    pointer-events: none;
+.text-block p:first-child {
+    margin-top: 0;
 }
 
 /* Ensure proper spacing and professional appearance */
@@ -325,16 +345,99 @@ body::before {
     box-sizing: border-box;
 }
 
-/* Clean metadata table bullets */
+/* Enhanced metadata table indicators - COMPACT */
 .meta-table td.label::before {
     content: "▪ ";
     color: #1e40af;
     font-weight: bold;
-    font-size: 10px;
+    font-size: 10px; /* Smaller indicator */
     opacity: 0.7;
+    margin-right: 3px; /* Less margin */
 }
 
-/* Professional document authenticity */
+/* Professional document security features */
 .section:first-of-type {
     position: relative;
+}
+
+/* Page break controls */
+.page-break {
+    page-break-before: always;
+}
+
+.no-page-break {
+    page-break-inside: avoid;
+}
+
+/* Footer-specific styling pentru pagini */
+.page-footer-info {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1cm;
+    background: rgba(248, 250, 252, 0.9);
+    border-top: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5cm;
+    font-size: 8px;
+    color: #64748b;
+    z-index: 1000;
+}
+
+/* Special styling pentru primul footer */
+.first-page-footer {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-top: 3px solid #1e40af;
+}
+
+/* Document security indicator */
+.security-indicator {
+    font-size: 7px;
+    color: #dc2626;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Medical confidentiality notice */
+.confidentiality-notice {
+    font-size: 7px;
+    color: #1e40af;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Page numbering enhancement */
+.page-number {
+    font-size: 8px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Document ID styling */
+.document-id {
+    font-size: 7px;
+    color: #64748b;
+    font-family: 'DejaVu Sans Mono', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Accessibility și contrast improvements */
+@media (prefers-contrast: high) {
+    body {
+        color: #000000;
+    }
+    
+    h1, h2 {
+        color: #000080;
+    }
+    
+    .meta-table td.label {
+        background: #f0f0f0;
+        color: #000000;
+    }
 }
