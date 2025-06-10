@@ -10,7 +10,6 @@ from app.presentation.styles.style_manager import load_style
 
 
 class MainView(QWidget):
-    """Enhanced Main View with support for local DICOM files"""
 
     def __init__(self, auth_controller: AuthController, pacs_controller: HybridPacsController):
         super().__init__()
@@ -30,9 +29,9 @@ class MainView(QWidget):
         nav_bar = QHBoxLayout(self.nav_widget)
 
         # Navigation buttons
-        self.studies_button = QPushButton("📊 Enhanced Studies")
+        self.studies_button = QPushButton("Enhanced Studies")
         self.studies_button.setObjectName("NavButton")
-        self.patients_button = QPushButton("👥 Patients")
+        self.patients_button = QPushButton("Patients")
         self.patients_button.setObjectName("NavButton")
 
         # User info and logout
@@ -43,10 +42,10 @@ class MainView(QWidget):
 
         # Enhanced user display
         user_display = f"{full_name} ({username})" if full_name else username
-        self.user_label = QLabel(f"👨‍⚕️ {user_display} | {role}")
+        self.user_label = QLabel(f"{user_display} | {role}")
         self.user_label.setObjectName("UserLabel")
 
-        self.logout_button = QPushButton("🚪 Logout")
+        self.logout_button = QPushButton("Logout")
         self.logout_button.setObjectName("LogoutButton")
 
         # Connect navigation
@@ -66,7 +65,6 @@ class MainView(QWidget):
         # Pages with enhanced functionality
         self.pages = QStackedWidget()
 
-        # Use EnhancedPacsView instead of regular PacsView
         self.pacs_page = EnhancedPacsView(self._pacs_controller, self._auth_controller)
         self.patients_page = PatientsView()
 

@@ -19,8 +19,6 @@ from app.config.settings import Settings
 
 
 class EnhancedPacsView(QWidget):
-    """Enhanced PACS View with local DICOM file support"""
-
     def __init__(self, pacs_controller: HybridPacsController, auth_controller: AuthController):
         super().__init__()
         self._pacs_controller = pacs_controller
@@ -44,60 +42,32 @@ class EnhancedPacsView(QWidget):
         # Header with statistics
         header_layout = QHBoxLayout()
 
-        title_label = QLabel("📊 Enhanced PACS Viewer")
+        title_label = QLabel("PACS Viewer")
         title_label.setObjectName("SectionTitle")
 
-        # Statistics labels
-        self.stats_frame = QFrame()
-        self.stats_frame.setFrameStyle(QFrame.Shape.StyledPanel)
-        self.stats_frame.setStyleSheet("""
-            QFrame {
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 8px;
-            }
-        """)
-        stats_layout = QHBoxLayout(self.stats_frame)
-        stats_layout.setContentsMargins(12, 8, 12, 8)
-
-        self.pacs_count_label = QLabel("📡 PACS: 0")
-        self.local_count_label = QLabel("💻 Local: 0")
-        self.queue_count_label = QLabel("📤 Queue: 0")
-
-        for label in [self.pacs_count_label, self.local_count_label, self.queue_count_label]:
-            label.setStyleSheet("font-size: 12px; font-weight: 500; color: #475569; margin: 0 8px;")
-
-        stats_layout.addWidget(self.pacs_count_label)
-        stats_layout.addWidget(QLabel("|"))
-        stats_layout.addWidget(self.local_count_label)
-        stats_layout.addWidget(QLabel("|"))
-        stats_layout.addWidget(self.queue_count_label)
-        stats_layout.addStretch()
-
-        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setMaximumWidth(100)
         self.refresh_button.setFixedHeight(30)
         self.refresh_button.clicked.connect(self._load_studies)
 
         header_layout.addWidget(title_label)
         header_layout.addStretch()
-        header_layout.addWidget(self.stats_frame)
         header_layout.addWidget(self.refresh_button)
 
         main_layout.addLayout(header_layout)
 
         # Create tab widget
         self.tab_widget = QTabWidget()
+        self.tab_widget.setObjectName("StudiesTab")
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
 
         # Studies tab (main functionality)
         self.studies_tab = self._create_studies_tab()
-        self.tab_widget.addTab(self.studies_tab, "📊 Studies")
+        self.tab_widget.addTab(self.studies_tab, "Studies")
 
         # Local files management tab
         self.local_files_tab = self._create_local_files_tab()
-        self.tab_widget.addTab(self.local_files_tab, "📁 Local Files")
+        self.tab_widget.addTab(self.local_files_tab, "Local Files")
 
         main_layout.addWidget(self.tab_widget)
 
@@ -115,11 +85,7 @@ class EnhancedPacsView(QWidget):
         shortcuts_label.setMaximumHeight(20)
         main_layout.addWidget(shortcuts_label)
 
-        # Update initial statistics
-        self._update_statistics()
-
     def _create_studies_tab(self):
-        """Create the main studies and queue tab"""
         tab_widget = QWidget()
 
         # Scrollable container
@@ -131,7 +97,7 @@ class EnhancedPacsView(QWidget):
         scroll_layout.setContentsMargins(8, 8, 8, 8)
 
         # Study list section
-        studies_label = QLabel("📚 All Studies")
+        studies_label = QLabel("All Studies")
         studies_label.setObjectName("SectionTitle")
         scroll_layout.addWidget(studies_label)
 
@@ -147,7 +113,7 @@ class EnhancedPacsView(QWidget):
         metadata_widget = QWidget()
         metadata_layout = QVBoxLayout(metadata_widget)
 
-        metadata_label = QLabel("📋 Study Metadata")
+        metadata_label = QLabel("Study Metadata")
         metadata_label.setObjectName("SectionTitle")
         metadata_layout.addWidget(metadata_label)
 
@@ -159,7 +125,7 @@ class EnhancedPacsView(QWidget):
         queue_widget = QWidget()
         queue_layout = QVBoxLayout(queue_widget)
 
-        queue_label = QLabel("📤 Processing Queue")
+        queue_label = QLabel("Processing Queue")
         queue_label.setObjectName("SectionTitle")
         queue_layout.addWidget(queue_label)
 
@@ -174,7 +140,7 @@ class EnhancedPacsView(QWidget):
         self.add_to_queue_button.setObjectName("QueueButton")
         self.add_to_queue_button.clicked.connect(self._add_study_to_queue)
 
-        self.send_queue_button = QPushButton("🚀 Send to PACS")
+        self.send_queue_button = QPushButton("Send to PACS")
         self.send_queue_button.setObjectName("SendPACSButton")
         self.send_queue_button.clicked.connect(self._send_queue_to_pacs)
 
@@ -191,7 +157,7 @@ class EnhancedPacsView(QWidget):
         scroll_layout.addWidget(h_splitter)
 
         # Results section
-        results_label = QLabel("📝 Examination Results")
+        results_label = QLabel("Examination Results")
         results_label.setObjectName("SectionTitle")
         scroll_layout.addWidget(results_label)
 
@@ -203,15 +169,15 @@ class EnhancedPacsView(QWidget):
         # PDF action buttons
         pdf_buttons_layout = QHBoxLayout()
 
-        self.preview_button = QPushButton("👁️ Preview PDF")
+        self.preview_button = QPushButton("Preview PDF")
         self.preview_button.setObjectName("PreviewButton")
         self.preview_button.clicked.connect(self._preview_pdf)
 
-        self.generate_pdf_button = QPushButton("📄 Generate PDF")
+        self.generate_pdf_button = QPushButton("Generate PDF")
         self.generate_pdf_button.setObjectName("GeneratePDFButton")
         self.generate_pdf_button.clicked.connect(self._export_pdf)
 
-        self.print_button = QPushButton("🖨️ Print")
+        self.print_button = QPushButton("Print")
         self.print_button.setObjectName("PrintButton")
         self.print_button.clicked.connect(self._print_pdf)
 
@@ -231,7 +197,6 @@ class EnhancedPacsView(QWidget):
         return tab_widget
 
     def _create_local_files_tab(self):
-        """Create the local files management tab"""
         tab_widget = QWidget()
         tab_layout = QVBoxLayout(tab_widget)
         tab_layout.setSpacing(12)
@@ -249,37 +214,20 @@ class EnhancedPacsView(QWidget):
             tab_layout.addWidget(self.local_file_manager)
 
             # Drag and drop area
-            drop_label = QLabel("💡 Quick Load:")
-            drop_label.setStyleSheet("font-weight: 600; font-size: 12px; color: #475569; margin-bottom: 4px;")
+            drop_label = QLabel("Drag and Drop:")
+            drop_label.setObjectName("SectionTitle")
             tab_layout.addWidget(drop_label)
 
             self.drop_widget = LocalFileDropWidget()
+            self.drop_widget.setStyleSheet("min-width:1500;")
             self.drop_widget.files_dropped.connect(self._handle_dropped_files)
             self.drop_widget.setMaximumHeight(120)
             tab_layout.addWidget(self.drop_widget)
-
-        else:
-            # Show message if local file service is not available
-            message_label = QLabel(
-                "⚠️ Local file support is not available.\n\nTo enable local DICOM file support, ensure pydicom is installed and the HybridPacsService is properly configured.")
-            message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            message_label.setStyleSheet("""
-                QLabel {
-                    color: #dc2626;
-                    font-size: 14px;
-                    padding: 40px;
-                    background: #fef2f2;
-                    border: 1px solid #fecaca;
-                    border-radius: 8px;
-                }
-            """)
-            tab_layout.addWidget(message_label)
 
         tab_layout.addStretch()
         return tab_widget
 
     def _setup_shortcuts(self):
-        """Setup keyboard shortcuts"""
         # Ctrl+F to focus search
         search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
         search_shortcut.activated.connect(self.study_list.focus_search)
@@ -305,12 +253,10 @@ class EnhancedPacsView(QWidget):
         preview_shortcut.activated.connect(self._preview_pdf)
 
     def _clear_search_if_focused(self):
-        """Clear search if search input is focused"""
         if hasattr(self.study_list, 'search_input') and self.study_list.search_input.hasFocus():
             self.study_list._clear_search()
 
     def _load_studies(self):
-        """Load studies from both PACS and local files"""
         self.study_list.set_loading(True)
         self.refresh_button.setEnabled(False)
         self.refresh_button.setText("⏳ Loading...")
@@ -332,7 +278,6 @@ class EnhancedPacsView(QWidget):
         self.study_thread.start()
 
     def _on_studies_loaded(self, study_ids):
-        """Handle studies loaded"""
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
         self.refresh_button.setText("🔄 Refresh")
@@ -347,28 +292,23 @@ class EnhancedPacsView(QWidget):
                 # Count study types
                 if study_id.startswith("local_"):
                     local_count += 1
-                    display_text = f"💻 {metadata['Patient Name']} - {metadata['Study Date']} - {metadata['Description']}"
+                    display_text = f"[LOCAL]{metadata['Patient Name']} - {metadata['Study Date']} - {metadata['Description']}"
                 else:
                     pacs_count += 1
-                    display_text = f"📡 {metadata['Patient Name']} - {metadata['Study Date']} - {metadata['Description']}"
+                    display_text = f"{metadata['Patient Name']} - {metadata['Study Date']} - {metadata['Description']}"
 
                 self.study_list.add_study(study_id, display_text)
 
             except Exception as e:
                 print(f"Error loading metadata for study {study_id}: {e}")
 
-        # Update statistics
-        self._update_statistics()
-
     def _on_studies_error(self, error_message):
-        """Handle studies loading error"""
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
         self.refresh_button.setText("🔄 Refresh")
         self._notification_service.show_error(self, "Error", f"Error loading studies:\n{error_message}")
 
     def _on_study_selected(self, study_id: str):
-        """Handle study selection"""
         try:
             metadata = self._pacs_controller.get_study_metadata(study_id)
             self.metadata_widget.display_metadata(metadata)
@@ -384,12 +324,9 @@ class EnhancedPacsView(QWidget):
             self._notification_service.show_error(self, "Error", f"Error loading study data:\n{e}")
 
     def _on_local_studies_updated(self):
-        """Handle local studies updated"""
-        self._load_studies()  # Reload all studies
-        self._update_statistics()
+        self._load_studies()
 
     def _handle_dropped_files(self, file_paths: list):
-        """Handle files dropped onto the drop widget"""
         if hasattr(self._pacs_controller._pacs_service, '_local_file_service'):
             local_file_service = self._pacs_controller._pacs_service._local_file_service
 
@@ -420,7 +357,6 @@ class EnhancedPacsView(QWidget):
                 )
 
     def _export_pdf(self):
-        """Export study to PDF"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Warning", "Please select a study.")
@@ -438,7 +374,6 @@ class EnhancedPacsView(QWidget):
             self.last_generated_pdf_path = self._pacs_controller._last_generated_pdf_path
 
     def _preview_pdf(self):
-        """Preview PDF"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Warning", "Please select a study.")
@@ -450,7 +385,6 @@ class EnhancedPacsView(QWidget):
         self._pacs_controller.preview_pdf(study_id, result_text, self, current_user)
 
     def _print_pdf(self):
-        """Print last generated PDF"""
         if not self.last_generated_pdf_path or not os.path.exists(self.last_generated_pdf_path):
             self._notification_service.show_warning(self, "Warning", "No PDF to print. Generate a PDF first.")
             return
@@ -466,7 +400,6 @@ class EnhancedPacsView(QWidget):
             self._notification_service.show_error(self, "Error", f"Error printing PDF: {e}")
 
     def _add_study_to_queue(self):
-        """Add selected study to processing queue"""
         study_id = self.study_list.get_selected_study_id()
         if not study_id:
             self._notification_service.show_warning(self, "Atenție", "Selectează un studiu pentru a-l adăuga în queue.")
@@ -475,7 +408,7 @@ class EnhancedPacsView(QWidget):
         if self.queue_widget.is_study_in_queue(study_id):
             self._notification_service.show_warning(
                 self,
-                "Studiu deja în queue",
+                "Studiu deja în coada",
                 "Acest studiu este deja în queue pentru trimitere."
             )
             return
@@ -522,10 +455,8 @@ class EnhancedPacsView(QWidget):
                 message += "\nStudiul a fost adăugat fără rezultat al explorării."
 
             self._notification_service.show_info(self, "Studiu adăugat", message)
-            self._update_statistics()
 
     def _send_queue_to_pacs(self):
-        """Send all queued studies to target PACS"""
         queued_studies = self.queue_widget.get_queued_studies()
 
         if not queued_studies:
@@ -582,40 +513,11 @@ class EnhancedPacsView(QWidget):
         else:
             self._notification_service.show_error(self, "Eroare trimitere", message)
 
-        self._update_statistics()
-
-    def _update_statistics(self):
-        """Update the statistics display"""
-        try:
-            # Count studies by type
-            all_studies = self._pacs_controller.load_studies() if hasattr(self._pacs_controller, 'load_studies') else []
-
-            pacs_count = len([s for s in all_studies if not s.startswith("local_")])
-            local_count = len([s for s in all_studies if s.startswith("local_")])
-            queue_count = self.queue_widget.get_queue_count()
-
-            # Update labels
-            self.pacs_count_label.setText(f"📡 PACS: {pacs_count}")
-            self.local_count_label.setText(f"💻 Local: {local_count}")
-            self.queue_count_label.setText(f"📤 Queue: {queue_count}")
-
-            # Update queue button
-            if queue_count > 0:
-                self.send_queue_button.setText(f"🚀 Send Queue ({queue_count}) to PACS")
-            else:
-                self.send_queue_button.setText("🚀 Send Queue to PACS")
-
-            self.send_queue_button.setEnabled(queue_count > 0)
-
-        except Exception as e:
-            print(f"Error updating statistics: {e}")
-
     def refresh_all(self):
         """Refresh all data"""
         self._load_studies()
         if hasattr(self, 'local_file_manager'):
             self.local_file_manager.refresh_display()
-        self._update_statistics()
 
     def get_current_study_id(self) -> str:
         """Get currently selected study ID"""

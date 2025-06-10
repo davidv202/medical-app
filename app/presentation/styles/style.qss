@@ -640,3 +640,49 @@ QListWidget#StudyList QScrollBar::sub-line {
     background: none;
     border: none;
 }
+
+/* TAB WIDGET PENTRU STUDIES */
+QTabWidget#StudiesTab {
+   background: #ffffff;
+   border: 2px solid #e2e8f0;
+   border-radius: 12px;
+   margin: 4px;
+}
+
+QTabWidget#StudiesTab::pane {
+   background: #ffffff;
+   border: 1px solid #e2e8f0;
+   border-radius: 0px 10px 10px 10px;
+   padding: 16px;
+   top: -1px;
+}
+
+QTabWidget#StudiesTab QTabBar::tab {
+   background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+               stop:0 #f1f5f9, stop:0.5 #e2e8f0, stop:1 #cbd5e1);
+   color: #64748b;
+   border: 1px solid #d1d5db;
+   border-bottom: none;
+   padding: 14px 24px;
+   margin-right: 2px;
+   font-size: 15px;
+   font-weight: 600;
+   min-width: 140px;
+   border-top-left-radius: 10px;
+   border-top-right-radius: 10px;
+}
+
+QTabWidget#StudiesTab QTabBar::tab:selected {
+   background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+               stop:0 #ffffff, stop:0.05 #f0f9ff, stop:1 #ffffff);
+   color: #1e40af;
+   border: 2px solid #93c5fd;
+   border-bottom: 2px solid #ffffff;
+   margin-bottom: -2px;
+   font-weight: 700;
+}
+
+QTabWidget#StudiesTab QTabBar::tab:focus {
+   outline: 2px solid #3b82f6;
+   outline-offset: 2px;
+}

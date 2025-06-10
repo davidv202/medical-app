@@ -13,40 +13,32 @@ from app.config.settings import Settings
 
 
 class HybridPacsController:
-    """
-    Enhanced PACS controller that handles both remote PACS and local DICOM files
-    """
-
     def __init__(self, hybrid_pacs_service: IPacsService, pdf_service: IPdfService):
-        self._pacs_service = hybrid_pacs_service  # This should be HybridPacsService
+        self._pacs_service = hybrid_pacs_service
         self._pdf_service = pdf_service
         self._notification_service = NotificationService()
         self._settings = Settings()
         self._last_generated_pdf_path: Optional[str] = None
 
     def load_studies(self) -> List[str]:
-        """Load studies from both PACS and local files"""
         try:
             return self._pacs_service.get_all_studies()
         except PacsConnectionError as e:
             raise e
 
     def get_study_metadata(self, study_id: str) -> Dict[str, Any]:
-        """Get study metadata from appropriate source"""
         try:
             return self._pacs_service.get_study_metadata(study_id)
         except PacsDataError as e:
             raise e
 
     def get_study_instances(self, study_id: str) -> List[Dict[str, Any]]:
-        """Get study instances from appropriate source"""
         try:
             return self._pacs_service.get_study_instances(study_id)
         except PacsDataError as e:
             raise e
 
     def export_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
-        """Export PDF with examination results"""
         try:
             metadata = self.get_study_metadata(study_id)
 
@@ -71,7 +63,6 @@ class HybridPacsController:
             return False
 
     def preview_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
-        """Preview PDF with examination results"""
         try:
             if not result_text.strip():
                 self._notification_service.show_warning(parent_widget, "Atentie", "Completeaza rezultatul explorarii.")
@@ -95,7 +86,6 @@ class HybridPacsController:
             return False
 
     def add_study_to_queue(self, study_id: str, examination_result: str, parent_widget) -> bool:
-        """Add study to queue with enhanced local file support"""
         try:
             if not study_id:
                 self._notification_service.show_warning(parent_widget, "Atenție", "Nu este selectat niciun studiu.")
@@ -132,7 +122,6 @@ class HybridPacsController:
             return False, None
 
     def send_queued_studies_to_pacs(self, queued_studies: List, target_url: str, parent_widget) -> bool:
-        """Send queued studies to PACS with enhanced local file support"""
         try:
             if not queued_studies:
                 self._notification_service.show_warning(parent_widget, "Atenție", "Nu sunt studii în queue.")
@@ -223,7 +212,6 @@ class HybridPacsController:
 
     def _send_study_to_target_pacs(self, study_id: str, target_url: str, target_auth: tuple,
                                    examination_result: str = None) -> bool:
-        """Send study to target PACS with enhanced local file support"""
         try:
             study_type = "LOCAL" if self._is_local_study(study_id) else "PACS"
             print(f"Sending {study_type} study {study_id} to {target_url}")
@@ -271,14 +259,12 @@ class HybridPacsController:
             return ""
 
     def validate_study_for_queue(self, study_id: str, parent_widget) -> tuple[bool, Optional[Dict[str, Any]]]:
-        """Validate study for queue (enhanced for local files)"""
         try:
             if not study_id:
                 return False, None
 
             metadata = self.get_study_metadata(study_id)
 
-            # Check if study has instances
             instances = self.get_study_instances(study_id)
             if not instances:
                 study_type = "local" if self._is_local_study(study_id) else "PACS"
@@ -301,7 +287,6 @@ class HybridPacsController:
 
     # Local file management methods
     def load_local_dicom_file(self, file_path: str, parent_widget) -> bool:
-        """Load a local DICOM file"""
         try:
             if hasattr(self._pacs_service, 'load_local_dicom_file'):
                 result = self._pacs_service.load_local_dicom_file(file_path)
@@ -332,7 +317,6 @@ class HybridPacsController:
             return False
 
     def load_local_dicom_folder(self, folder_path: str, parent_widget) -> bool:
-        """Load DICOM files from folder"""
         try:
             if hasattr(self._pacs_service, 'load_local_dicom_folder'):
                 studies = self._pacs_service.load_local_dicom_folder(folder_path)
@@ -362,7 +346,6 @@ class HybridPacsController:
             return False
 
     def clear_local_studies(self, parent_widget) -> bool:
-        """Clear all local studies"""
         try:
             if hasattr(self._pacs_service, 'get_local_studies_count'):
                 count = self._pacs_service.get_local_studies_count()
@@ -437,7 +420,6 @@ class StudiesWorker(QObject):
 
 
 class QueueSenderWorker(QObject):
-    """Enhanced worker for sending queued studies (local and PACS) in background"""
     progress_updated = pyqtSignal(int, str)  # progress, current_study
     sending_completed = pyqtSignal(bool, str)  # success, message
 

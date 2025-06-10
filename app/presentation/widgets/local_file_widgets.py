@@ -11,7 +11,6 @@ from app.services.notification_service import NotificationService
 
 
 class LocalFileLoaderWorker(QObject):
-    """Worker for loading local DICOM files in background"""
     progress_updated = pyqtSignal(int, str)  # progress, current_file
     file_loaded = pyqtSignal(dict)  # file_data
     folder_loaded = pyqtSignal(list)  # list of studies
@@ -36,7 +35,6 @@ class LocalFileLoaderWorker(QObject):
             self.finished.emit()
 
     def _load_folder(self):
-        """Load all DICOM files from folder"""
         self.progress_updated.emit(0, f"Scanning folder: {self._folder_path}")
 
         try:
@@ -47,7 +45,6 @@ class LocalFileLoaderWorker(QObject):
             self.error_occurred.emit(f"Error loading folder: {e}")
 
     def _load_files(self):
-        """Load individual DICOM files"""
         total_files = len(self._file_paths)
 
         for i, file_path in enumerate(self._file_paths):
@@ -66,7 +63,6 @@ class LocalFileLoaderWorker(QObject):
 
 
 class LocalFileManagerWidget(QWidget):
-    """Widget for managing local DICOM files"""
     studies_updated = pyqtSignal()  # Emitted when local studies are updated
 
     def __init__(self, local_file_service, parent=None):
@@ -82,14 +78,10 @@ class LocalFileManagerWidget(QWidget):
         # Header
         header_layout = QHBoxLayout()
 
-        title_label = QLabel("📁 Local DICOM Files")
+        title_label = QLabel("Local DICOM Files")
         title_label.setObjectName("SectionTitle")
 
-        self.local_count_label = QLabel("(0 studies)")
-        self.local_count_label.setStyleSheet("color: #6b7280; font-size: 12px;")
-
         header_layout.addWidget(title_label)
-        header_layout.addWidget(self.local_count_label)
         header_layout.addStretch()
 
         layout.addLayout(header_layout)

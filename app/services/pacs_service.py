@@ -26,13 +26,32 @@ class PacsService(IPacsService):
             data = response.json()
 
             return {
+                # Date Pacient - ESENȚIALE
                 "Patient Name": data.get('PatientMainDicomTags', {}).get('PatientName', 'N/A'),
+                "Patient ID": data.get('PatientMainDicomTags', {}).get('PatientID', 'N/A'),
                 "Patient Birth Date": data.get('PatientMainDicomTags', {}).get('PatientBirthDate', 'N/A'),
                 "Patient Sex": data.get('PatientMainDicomTags', {}).get('PatientSex', 'N/A'),
+                "Patient Age": data.get('PatientMainDicomTags', {}).get('PatientAge', 'N/A'),
+
+                # Date Studiu - CRITICE
                 "Study Date": data.get('MainDicomTags', {}).get('StudyDate', 'N/A'),
-                "Study Instance UID": data.get('MainDicomTags', {}).get('StudyInstanceUID', 'N/A'),
+                "Study Time": data.get('MainDicomTags', {}).get('StudyTime', 'N/A'),
                 "Description": data.get('MainDicomTags', {}).get('StudyDescription', 'N/A'),
-                "Series Status": data.get('SeriesMainDicomTags', {}).get('Status', 'N/A')
+                "Study Instance UID": data.get('MainDicomTags', {}).get('StudyInstanceUID', 'N/A'),
+                "Accession Number": data.get('MainDicomTags', {}).get('AccessionNumber', 'N/A'),
+                "Referring Physician": data.get('MainDicomTags', {}).get('ReferringPhysicianName', 'N/A'),
+                "Study ID": data.get('MainDicomTags', {}).get('StudyID', 'N/A'),
+
+                # Date Echipament
+                "Institution Name": data.get('MainDicomTags', {}).get('InstitutionName', 'N/A'),
+                "Modality": data.get('MainDicomTags', {}).get('Modality', 'N/A'),
+
+                # Date Serie (primul disponibil)
+                "Series Description": data.get('SeriesMainDicomTags', {}).get('SeriesDescription', 'N/A'),
+                "Body Part Examined": data.get('SeriesMainDicomTags', {}).get('BodyPartExamined', 'N/A'),
+
+                # Status
+                "Series Status": data.get('SeriesMainDicomTags', {}).get('Status', 'Available')
             }
         except Exception as e:
             raise PacsDataError(f"Nu am putut incarca metadatele din studiul {study_id}: {e}")

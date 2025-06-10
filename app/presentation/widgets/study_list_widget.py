@@ -259,9 +259,6 @@ class StudyQueueWidget(QWidget):
         # Queue header with count
         header_layout = QHBoxLayout()
 
-        self.queue_label = QLabel("📤 Queue")
-        self.queue_label.setObjectName("SectionTitle")
-
         self.queue_count_label = QLabel("(0 studii)")
         self.queue_count_label.setStyleSheet("color: #6b7280; font-size: 12px;")
 
@@ -271,7 +268,6 @@ class StudyQueueWidget(QWidget):
         self.clear_queue_button.setMaximumHeight(25)
         self.clear_queue_button.clicked.connect(self.clear_queue)
 
-        header_layout.addWidget(self.queue_label)
         header_layout.addWidget(self.queue_count_label)
         header_layout.addStretch()
         header_layout.addWidget(self.clear_queue_button)
