@@ -260,7 +260,6 @@ class LocalFileManagerWidget(QWidget):
 
             # Update count label
             count = len(local_studies)
-            self.local_count_label.setText(f"({count} studies)" if count != 1 else "(1 study)")
 
             # Update list
             for study_id in local_studies:

@@ -1,16 +1,12 @@
 from typing import List, Dict, Any, Optional
 from app.core.interfaces.pacs_interface import IPacsService
-from app.core.interfaces.local_file_interface import ILocalFileService
+from app.services.local_file_service import LocalFileService
 from app.services.pacs_service import PacsService
 from app.core.exceptions.pacs_exceptions import PacsDataError
 
 
 class HybridPacsService(IPacsService):
-    """
-    Hybrid service that combines remote PACS and local file functionality
-    """
-
-    def __init__(self, pacs_service: PacsService, local_file_service: ILocalFileService):
+    def __init__(self, pacs_service: PacsService, local_file_service: LocalFileService):
         self._pacs_service = pacs_service
         self._local_file_service = local_file_service
 
