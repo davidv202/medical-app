@@ -432,8 +432,7 @@ class AdminView(QWidget):
 
             user_repo.update(updated_user)
 
-            self._notification_service.show_info(self, "Succes",
-                                                 f"Utilizatorul '{username}' a fost actualizat cu succes.")
+            self._notification_service.show_info(self, "Succes",f"Utilizatorul '{username}' a fost actualizat cu succes.")
 
             self._cancel_edit()
             self._load_users()
