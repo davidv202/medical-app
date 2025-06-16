@@ -138,7 +138,6 @@ class LocalFileManagerWidget(QWidget):
         self._update_local_studies_display()
 
     def _load_dicom_files(self):
-        """Load individual DICOM files"""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
             "Select DICOM Files",
@@ -150,7 +149,6 @@ class LocalFileManagerWidget(QWidget):
             self._load_files_in_background(file_paths)
 
     def _load_dicom_folder(self):
-        """Load DICOM folder"""
         folder_path = QFileDialog.getExistingDirectory(
             self,
             "Select DICOM Folder"
@@ -160,7 +158,6 @@ class LocalFileManagerWidget(QWidget):
             self._load_folder_in_background(folder_path)
 
     def _load_files_in_background(self, file_paths: List[str]):
-        """Load files in background thread"""
         self._show_loading_state(True, f"Loading {len(file_paths)} files...")
 
         self.loader_thread = QThread()
@@ -185,7 +182,6 @@ class LocalFileManagerWidget(QWidget):
         self.loader_thread.start()
 
     def _load_folder_in_background(self, folder_path: str):
-        """Load folder in background thread"""
         self._show_loading_state(True, f"Scanning folder: {os.path.basename(folder_path)}")
 
         self.loader_thread = QThread()
@@ -210,7 +206,6 @@ class LocalFileManagerWidget(QWidget):
         self.loader_thread.start()
 
     def _show_loading_state(self, loading: bool, message: str = ""):
-        """Show/hide loading state"""
         self.progress_bar.setVisible(loading)
         self.status_label.setVisible(loading)
         if loading:
@@ -223,17 +218,14 @@ class LocalFileManagerWidget(QWidget):
         self.clear_button.setEnabled(not loading)
 
     def _update_loading_progress(self, progress: int, message: str):
-        """Update loading progress"""
         self.progress_bar.setValue(progress)
         self.status_label.setText(message)
 
     def _on_file_loaded(self, file_data: Dict[str, Any]):
-        """Handle single file loaded"""
         # File data contains: study_id, metadata, instance_id
         self._update_local_studies_display()
 
     def _on_folder_loaded(self, studies: List[Dict[str, Any]]):
-        """Handle folder loaded"""
         study_count = len(studies)
         total_files = sum(study.get("file_count", 0) for study in studies)
 
@@ -243,16 +235,13 @@ class LocalFileManagerWidget(QWidget):
         self._update_local_studies_display()
 
     def _on_loading_error(self, error_message: str):
-        """Handle loading error"""
         self._notification_service.show_error(self, "Loading Error", error_message)
 
     def _on_loading_finished(self):
-        """Handle loading finished"""
         self._show_loading_state(False)
         self.studies_updated.emit()
 
     def _update_local_studies_display(self):
-        """Update the display of loaded local studies"""
         self.local_studies_list.clear()
 
         try:
@@ -291,7 +280,6 @@ class LocalFileManagerWidget(QWidget):
             print(f"Error updating local studies display: {e}")
 
     def _clear_local_studies(self):
-        """Clear all local studies"""
         try:
             count = len(self._local_file_service.get_all_local_studies())
             if count == 0:
@@ -313,7 +301,6 @@ class LocalFileManagerWidget(QWidget):
             self._notification_service.show_error(self, "Error", f"Error clearing local studies: {e}")
 
     def _show_local_study_context_menu(self, position):
-        """Show context menu for local studies"""
         item = self.local_studies_list.itemAt(position)
         if not item:
             return
@@ -338,7 +325,6 @@ class LocalFileManagerWidget(QWidget):
         menu.exec(self.local_studies_list.mapToGlobal(position))
 
     def _view_local_study_details(self, study_id: str):
-        """Show details dialog for local study"""
         try:
             metadata = self._local_file_service.get_local_study_metadata(study_id)
             instances = self._local_file_service.get_local_study_instances(study_id)
@@ -352,7 +338,6 @@ class LocalFileManagerWidget(QWidget):
             self._notification_service.show_error(self, "Error", f"Error viewing study details: {e}")
 
     def _remove_local_study(self, study_id: str):
-        """Remove local study from list"""
         try:
             metadata = self._local_file_service.get_local_study_metadata(study_id)
             patient_name = metadata.get("Patient Name", "Unknown")
@@ -374,20 +359,11 @@ class LocalFileManagerWidget(QWidget):
         except Exception as e:
             self._notification_service.show_error(self, "Error", f"Error removing study: {e}")
 
-    def get_local_studies_count(self) -> int:
-        """Get count of loaded local studies"""
-        try:
-            return len(self._local_file_service.get_all_local_studies())
-        except:
-            return 0
-
     def refresh_display(self):
-        """Refresh the local studies display"""
         self._update_local_studies_display()
 
 
 class LocalStudyDetailsDialog(QMessageBox):
-    """Dialog showing details of a local study"""
 
     def __init__(self, study_id: str, metadata: Dict[str, Any], instances: List[Dict[str, Any]],
                  examination_result: str, parent=None):
@@ -420,7 +396,6 @@ class LocalStudyDetailsDialog(QMessageBox):
 
 
 class LocalFileDropWidget(QFrame):
-    """Drag and drop widget for DICOM files"""
     files_dropped = pyqtSignal(list)  # List of file paths
 
     def __init__(self, parent=None):
@@ -452,7 +427,6 @@ class LocalFileDropWidget(QFrame):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
-            # Check if any URLs are files
             urls = event.mimeData().urls()
             for url in urls:
                 if url.isLocalFile():
@@ -476,8 +450,6 @@ class LocalFileDropWidget(QFrame):
                 if os.path.isfile(file_path):
                     file_paths.append(file_path)
                 elif os.path.isdir(file_path):
-                    # If it's a directory, we could handle it differently
-                    # For now, let's collect all files in the directory
                     for root, dirs, files in os.walk(file_path):
                         for file in files:
                             full_path = os.path.join(root, file)

@@ -77,7 +77,6 @@ class MainView(QWidget):
         self._switch_page(0)
 
     def _switch_page(self, index: int):
-        """Switch between pages with enhanced feedback"""
         self.pages.setCurrentIndex(index)
 
         # Update button states
@@ -91,42 +90,13 @@ class MainView(QWidget):
         self.patients_button.style().polish(self.patients_button)
 
     def _handle_logout(self):
-        """Handle logout with confirmation"""
         if self._auth_controller.logout(self):
             self._open_login_window()
 
     def _open_login_window(self):
-        """Open login window"""
         from app.presentation.views.login_view import LoginView
         from app.di.container import Container
 
         self.login_window = LoginView(Container.get_auth_controller())
         self.login_window.show()
         self.close()
-
-    def refresh_current_page(self):
-        """Refresh current page data"""
-        current_index = self.pages.currentIndex()
-        if current_index == 0 and hasattr(self.pacs_page, 'refresh_all'):
-            self.pacs_page.refresh_all()
-
-    def get_current_page_name(self) -> str:
-        """Get name of current page"""
-        current_index = self.pages.currentIndex()
-        if current_index == 0:
-            return "Enhanced Studies"
-        elif current_index == 1:
-            return "Patients"
-        return "Unknown"
-
-    def switch_to_studies_page(self):
-        """Switch to studies page"""
-        self._switch_page(0)
-
-    def switch_to_patients_page(self):
-        """Switch to patients page"""
-        self._switch_page(1)
-
-    def get_pacs_view(self) -> EnhancedPacsView:
-        """Get reference to enhanced PACS view"""
-        return self.pacs_page

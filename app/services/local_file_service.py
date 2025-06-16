@@ -3,20 +3,13 @@ import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime
-
-try:
-    import pydicom
-
-    PYDICOM_AVAILABLE = True
-except ImportError:
-    PYDICOM_AVAILABLE = False
+import pydicom
 
 from app.core.interfaces.local_file_interface import ILocalFileService
 from app.core.exceptions.pacs_exceptions import PacsDataError
 
 
 class LocalFileService(ILocalFileService):
-    """Service for handling local DICOM files"""
 
     def __init__(self, cache_dir: str = "local_studies_cache"):
         self.cache_dir = cache_dir
@@ -32,9 +25,6 @@ class LocalFileService(ILocalFileService):
         self._load_cache()
 
     def load_dicom_file(self, file_path: str) -> Dict[str, Any]:
-        """Load a single DICOM file and extract metadata"""
-        if not PYDICOM_AVAILABLE:
-            raise PacsDataError("pydicom library is required for local DICOM file support")
 
         try:
             if not os.path.exists(file_path):
@@ -86,7 +76,6 @@ class LocalFileService(ILocalFileService):
             raise PacsDataError(f"Error loading DICOM file {file_path}: {e}")
 
     def load_dicom_folder(self, folder_path: str) -> List[Dict[str, Any]]:
-        """Load all DICOM files from a folder and group by study"""
         if not os.path.exists(folder_path):
             raise PacsDataError(f"Folder not found: {folder_path}")
 
@@ -126,16 +115,13 @@ class LocalFileService(ILocalFileService):
         return loaded_studies
 
     def get_study_metadata_from_file(self, file_path: str) -> Dict[str, Any]:
-        """Extract study metadata from a DICOM file"""
         result = self.load_dicom_file(file_path)
         return result["metadata"]
 
     def get_local_study_instances(self, study_id: str) -> List[Dict[str, Any]]:
-        """Get instances for a local study"""
         return self.study_instances.get(study_id, [])
 
     def get_local_dicom_file(self, instance_id: str) -> bytes:
-        """Get DICOM file content from local instance"""
         file_path = self.instance_files.get(instance_id)
         if not file_path or not os.path.exists(file_path):
             raise PacsDataError(f"Local DICOM file not found for instance {instance_id}")
@@ -147,7 +133,6 @@ class LocalFileService(ILocalFileService):
             raise PacsDataError(f"Error reading local DICOM file: {e}")
 
     def add_examination_result_to_local_study(self, study_id: str, examination_result: str) -> bool:
-        """Add examination result to local study metadata"""
         try:
             self.examination_results[study_id] = examination_result
             self._save_cache()
@@ -157,21 +142,17 @@ class LocalFileService(ILocalFileService):
             return False
 
     def get_examination_result_from_local_study(self, study_id: str) -> str:
-        """Get examination result from local study"""
         return self.examination_results.get(study_id, "")
 
     def get_all_local_studies(self) -> List[str]:
-        """Get all loaded local study IDs"""
         return list(self.local_studies.keys())
 
     def get_local_study_metadata(self, study_id: str) -> Dict[str, Any]:
-        """Get metadata for a local study"""
         if study_id not in self.local_studies:
             raise PacsDataError(f"Local study {study_id} not found")
         return self.local_studies[study_id]
 
     def clear_local_studies(self):
-        """Clear all loaded local studies"""
         self.local_studies.clear()
         self.study_instances.clear()
         self.instance_files.clear()
@@ -179,7 +160,6 @@ class LocalFileService(ILocalFileService):
         self._save_cache()
 
     def remove_local_study(self, study_id: str) -> bool:
-        """Remove a specific local study"""
         try:
             if study_id in self.local_studies:
                 del self.local_studies[study_id]
@@ -200,7 +180,6 @@ class LocalFileService(ILocalFileService):
             return False
 
     def _extract_metadata_from_dataset(self, dataset) -> Dict[str, Any]:
-        """Extract metadata from pydicom dataset"""
         try:
             return {
                 "Patient Name": str(getattr(dataset, 'PatientName', 'Unknown')).replace('^', ' '),
@@ -226,7 +205,6 @@ class LocalFileService(ILocalFileService):
             }
 
     def _format_date(self, date_str: str) -> str:
-        """Format DICOM date to readable format"""
         if not date_str or len(date_str) < 8:
             return "Unknown"
 
@@ -243,10 +221,6 @@ class LocalFileService(ILocalFileService):
         return date_str
 
     def _is_dicom_file(self, file_path: str) -> bool:
-        """Check if a file is a DICOM file"""
-        if not PYDICOM_AVAILABLE:
-            return False
-
         try:
             # Check file extension first
             ext = os.path.splitext(file_path)[1].lower()
@@ -274,7 +248,6 @@ class LocalFileService(ILocalFileService):
         return False
 
     def _save_cache(self):
-        """Save current state to cache file"""
         try:
             cache_file = os.path.join(self.cache_dir, "local_studies_cache.json")
             cache_data = {
@@ -292,7 +265,6 @@ class LocalFileService(ILocalFileService):
             print(f"Warning: Could not save cache: {e}")
 
     def _load_cache(self):
-        """Load cached state from file"""
         try:
             cache_file = os.path.join(self.cache_dir, "local_studies_cache.json")
             if os.path.exists(cache_file):
@@ -316,7 +288,6 @@ class LocalFileService(ILocalFileService):
             self.examination_results = {}
 
     def _verify_cached_files(self):
-        """Verify that cached file paths still exist"""
         invalid_instances = []
 
         for instance_id, file_path in self.instance_files.items():

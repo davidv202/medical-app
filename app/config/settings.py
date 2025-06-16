@@ -40,12 +40,10 @@ class Settings:
 
     @classmethod
     def get_local_cache_path(cls) -> str:
-        """Get the full path for local studies cache"""
         return os.path.join(cls.BASE_DIR, cls.LOCAL_STUDIES_CACHE_DIR)
 
     @classmethod
     def ensure_directories(cls):
-        """Ensure all required directories exist"""
         directories = [
             cls.PDF_OUTPUT_DIR,
             cls.PDF_PREVIEW_DIR,
@@ -58,13 +56,11 @@ class Settings:
 
     @classmethod
     def is_supported_dicom_extension(cls, file_path: str) -> bool:
-        """Check if file has supported DICOM extension"""
         ext = os.path.splitext(file_path)[1].lower()
         return ext in cls.SUPPORTED_DICOM_EXTENSIONS
 
     @classmethod
     def get_app_info(cls) -> dict:
-        """Get application configuration information"""
         return {
             'app_name': 'Medical PACS System with Local File Support',
             'version': '2.0.0',

@@ -4,7 +4,6 @@ from typing import Optional
 
 
 class BaseWidget(QWidget):
-    """Base widget with common functionality"""
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -12,11 +11,9 @@ class BaseWidget(QWidget):
         self.connect_signals()
 
     def setup_ui(self):
-        """Override this method to setup the UI"""
         pass
 
     def connect_signals(self):
-        """Override this method to connect signals"""
         pass
 
 
@@ -55,7 +52,6 @@ class ConfirmationDialog(BaseWidget):
 
 
 class LoadingWidget(BaseWidget):
-    """Loading indicator widget"""
 
     def __init__(self, message: str = "Loading...", parent: Optional[QWidget] = None):
         self.message = message

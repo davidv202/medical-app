@@ -180,7 +180,6 @@ class HybridPacsController:
                         f"{queued_study.patient_name} ({queued_study.study_date}) [{study_type}] - {str(e)}")
                     print(f"✗ Error sending {study_type} study {queued_study.patient_name}: {e}")
 
-            # Show results
             if success_count == study_count:
                 message = f"Toate {study_count} studiile au fost trimise cu succes la PACS.\n"
                 message += f"Rezultatele explorărilor au fost incluse în metadata DICOM."
@@ -218,7 +217,6 @@ class HybridPacsController:
             print(f"Using authentication: {target_auth[0]}:***")
             print(f"Examination result length: {len(examination_result) if examination_result else 0} characters")
 
-            # Use hybrid PACS service to send study (handles both local and PACS)
             success = self._pacs_service.send_study_to_pacs(
                 study_id,
                 target_url,
@@ -238,13 +236,10 @@ class HybridPacsController:
             return False
 
     def get_examination_result_from_study(self, study_id: str) -> str:
-        """Get examination result from study (works for both local and PACS)"""
         try:
-            # Use the hybrid service method that handles both local and PACS studies
             if hasattr(self._pacs_service, 'get_examination_result_from_study'):
                 return self._pacs_service.get_examination_result_from_study(study_id)
 
-            # Fallback to instance-based method
             instances = self.get_study_instances(study_id)
             for instance in instances:
                 instance_id = instance.get("ID")
@@ -285,66 +280,6 @@ class HybridPacsController:
             )
             return False, None
 
-    # Local file management methods
-    def load_local_dicom_file(self, file_path: str, parent_widget) -> bool:
-        try:
-            if hasattr(self._pacs_service, 'load_local_dicom_file'):
-                result = self._pacs_service.load_local_dicom_file(file_path)
-                study_id = result.get("study_id")
-                metadata = result.get("metadata", {})
-                patient_name = metadata.get("Patient Name", "Unknown")
-
-                self._notification_service.show_info(
-                    parent_widget,
-                    "File Loaded",
-                    f"Local DICOM file loaded successfully:\n{patient_name}"
-                )
-                return True
-            else:
-                self._notification_service.show_error(
-                    parent_widget,
-                    "Error",
-                    "Local file support not available in current PACS service"
-                )
-                return False
-
-        except Exception as e:
-            self._notification_service.show_error(
-                parent_widget,
-                "Error",
-                f"Error loading local DICOM file: {e}"
-            )
-            return False
-
-    def load_local_dicom_folder(self, folder_path: str, parent_widget) -> bool:
-        try:
-            if hasattr(self._pacs_service, 'load_local_dicom_folder'):
-                studies = self._pacs_service.load_local_dicom_folder(folder_path)
-                study_count = len(studies)
-                total_files = sum(study.get("file_count", 0) for study in studies)
-
-                self._notification_service.show_info(
-                    parent_widget,
-                    "Folder Loaded",
-                    f"Loaded {study_count} studies ({total_files} files) from folder"
-                )
-                return True
-            else:
-                self._notification_service.show_error(
-                    parent_widget,
-                    "Error",
-                    "Local folder support not available in current PACS service"
-                )
-                return False
-
-        except Exception as e:
-            self._notification_service.show_error(
-                parent_widget,
-                "Error",
-                f"Error loading DICOM folder: {e}"
-            )
-            return False
-
     def clear_local_studies(self, parent_widget) -> bool:
         try:
             if hasattr(self._pacs_service, 'get_local_studies_count'):
@@ -380,21 +315,10 @@ class HybridPacsController:
             )
             return False
 
-    def get_local_studies_count(self) -> int:
-        """Get count of loaded local studies"""
-        try:
-            if hasattr(self._pacs_service, 'get_local_studies_count'):
-                return self._pacs_service.get_local_studies_count()
-            return 0
-        except:
-            return 0
-
     def _is_local_study(self, study_id: str) -> bool:
-        """Check if study ID belongs to a local study"""
         return study_id.startswith("local_")
 
     def _save_examination_result_to_study(self, study_id: str, examination_result: str):
-        """Save examination result to study"""
         try:
             if hasattr(self._pacs_service, 'add_examination_result_to_study'):
                 self._pacs_service.add_examination_result_to_study(study_id, examination_result)
@@ -403,7 +327,6 @@ class HybridPacsController:
 
 
 class StudiesWorker(QObject):
-    """Enhanced worker for loading studies from both PACS and local files"""
     studies_loaded = pyqtSignal(list)
     error_occurred = pyqtSignal(str)
 
@@ -431,7 +354,6 @@ class QueueSenderWorker(QObject):
 
     def run(self):
         try:
-            # Get target authentication
             settings = Settings()
             target_auth = settings.PACS_AUTH_2 if self._target_url == settings.PACS_URL_2 else settings.PACS_AUTH
 
@@ -467,10 +389,8 @@ class QueueSenderWorker(QObject):
                 except Exception as e:
                     failed_studies.append(f"{queued_study.patient_name} [{study_type}] - {str(e)}")
 
-            # Final progress
             self.progress_updated.emit(100, "Finalizat")
 
-            # Build completion message
             if success_count == total_studies:
                 message = f"Toate {total_studies} studiile au fost trimise cu succes!"
                 if local_studies_sent > 0:

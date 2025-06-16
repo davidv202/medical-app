@@ -495,13 +495,11 @@ class EnhancedPacsView(QWidget):
         self.sender_thread.start()
 
     def _update_sending_progress(self, progress: int, current_study: str):
-        """Update progress bar during sending"""
         self.progress_bar.setValue(progress)
         if progress < 100:
             self.send_queue_button.setText(f"⏳ Trimitere... {current_study}")
 
     def _on_sending_completed(self, success: bool, message: str):
-        """Handle completion of queue sending"""
         self.progress_bar.setVisible(False)
         self.send_queue_button.setEnabled(True)
         self.send_queue_button.setText("🚀 Send Queue to PACS")
@@ -514,19 +512,6 @@ class EnhancedPacsView(QWidget):
             self._notification_service.show_error(self, "Eroare trimitere", message)
 
     def refresh_all(self):
-        """Refresh all data"""
         self._load_studies()
         if hasattr(self, 'local_file_manager'):
             self.local_file_manager.refresh_display()
-
-    def get_current_study_id(self) -> str:
-        """Get currently selected study ID"""
-        return self.study_list.get_selected_study_id()
-
-    def switch_to_studies_tab(self):
-        """Switch to studies tab"""
-        self.tab_widget.setCurrentIndex(0)
-
-    def switch_to_local_files_tab(self):
-        """Switch to local files tab"""
-        self.tab_widget.setCurrentIndex(1)

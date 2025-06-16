@@ -3,7 +3,6 @@ from app.presentation.styles.style_manager import load_style
 
 
 class PatientsView(QWidget):
-    """Simple patients view - can be expanded later"""
 
     def __init__(self):
         super().__init__()

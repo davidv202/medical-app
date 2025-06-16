@@ -9,7 +9,6 @@ from app.config.settings import Settings
 
 
 def setup_application():
-    """Setup application-wide configurations"""
     # Ensure required directories exist
     settings = Settings()
 
@@ -22,7 +21,6 @@ def setup_application():
 
 
 def log_session_info():
-    """Log current session information for debugging"""
     try:
         session_service = Container.get_session_service()
         user = session_service.get_current_user()
@@ -36,17 +34,14 @@ def log_session_info():
 
 
 def main():
-    """Main application entry point"""
     print("Starting Medical PACS Application...")
 
-    # Create QApplication
     app = QApplication(sys.argv)
     app.setApplicationName("Medical PACS System")
     app.setApplicationVersion("1.0.0")
     app.setOrganizationName("Medical Solutions Inc.")
 
     try:
-        # Setup application
         setup_application()
 
         # Initialize dependency injection container
@@ -58,10 +53,9 @@ def main():
         login_window = LoginView(auth_controller)
         login_window.show()
 
-        # Optional: Setup session monitoring timer (uncomment if needed for debugging)
         session_timer = QTimer()
         session_timer.timeout.connect(log_session_info)
-        session_timer.start(10000)  # Log every 10 seconds
+        session_timer.start(10000)
 
         print("Application started successfully")
 

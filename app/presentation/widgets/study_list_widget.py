@@ -15,7 +15,6 @@ class QueuedStudy(NamedTuple):
     description: str
 
 class SearchableStudyListWidget(QWidget):
-    """Enhanced study list widget with search functionality"""
     study_selected = pyqtSignal(str)  # study_id
 
     def __init__(self, parent=None):
@@ -92,7 +91,6 @@ class SearchableStudyListWidget(QWidget):
         layout.addWidget(scroll_area)
 
     def _on_search_text_changed(self, text: str):
-        """Handle search text change with debouncing"""
         # Show/hide clear button
         self.clear_button.setVisible(bool(text.strip()))
 
@@ -104,7 +102,6 @@ class SearchableStudyListWidget(QWidget):
             self._clear_search()
 
     def _perform_search(self):
-        """Perform the actual search"""
         search_text = self.search_input.text().strip().lower()
 
         if not search_text:
@@ -120,7 +117,6 @@ class SearchableStudyListWidget(QWidget):
         self._display_filtered_studies(filtered, search_text)
 
     def _display_filtered_studies(self, filtered_studies: List[Tuple[str, str]], search_text: str):
-        """Display filtered studies in the list"""
         self.study_list.clear()
         self.filtered_studies.clear()
 
@@ -147,13 +143,11 @@ class SearchableStudyListWidget(QWidget):
         self.results_label.setVisible(True)
 
     def _highlight_search_terms(self, text: str, search_term: str) -> str:
-        """Simple text highlighting (you could enhance this with HTML formatting)"""
         # For now, just return the original text
         # In a more advanced implementation, you could use HTML formatting
         return text
 
     def _show_all_studies(self):
-        """Show all studies (no filtering)"""
         self.study_list.clear()
         self.filtered_studies.clear()
 
@@ -166,13 +160,11 @@ class SearchableStudyListWidget(QWidget):
         self.results_label.setVisible(False)
 
     def _clear_search(self):
-        """Clear search and show all studies"""
         self.search_input.clear()
         self.clear_button.setVisible(False)
         self._show_all_studies()
 
     def add_study(self, study_id: str, display_text: str):
-        """Add a study to the list"""
         self.all_studies.append((study_id, display_text))
 
         # If no search is active, add to visible list
@@ -183,7 +175,6 @@ class SearchableStudyListWidget(QWidget):
             self.study_list.addItem(item)
 
     def clear_studies(self):
-        """Clear all studies"""
         self.all_studies.clear()
         self.study_list.clear()
         self.filtered_studies.clear()
@@ -192,7 +183,6 @@ class SearchableStudyListWidget(QWidget):
         self.results_label.setVisible(False)
 
     def set_loading(self, is_loading: bool):
-        """Show/hide loading state"""
         if is_loading:
             self.clear_studies()
             self.study_list.addItem("Se încarcă studiile...")
@@ -207,7 +197,6 @@ class SearchableStudyListWidget(QWidget):
             self.search_input.setEnabled(True)
 
     def get_selected_study_id(self) -> str:
-        """Get the currently selected study ID"""
         current_item = self.study_list.currentItem()
         if current_item:
             # Try to get from UserRole data first
@@ -221,7 +210,6 @@ class SearchableStudyListWidget(QWidget):
         return ""
 
     def _on_item_clicked(self, item: QListWidgetItem):
-        """Handle item click"""
         study_id = item.data(Qt.ItemDataRole.UserRole)
         if study_id:
             self.study_selected.emit(study_id)
@@ -232,20 +220,16 @@ class SearchableStudyListWidget(QWidget):
                 self.study_selected.emit(study_id)
 
     def focus_search(self):
-        """Set focus to search input"""
         self.search_input.setFocus()
 
     def get_search_text(self) -> str:
-        """Get current search text"""
         return self.search_input.text().strip()
 
     def set_search_text(self, text: str):
-        """Set search text programmatically"""
         self.search_input.setText(text)
 
 
 class StudyQueueWidget(QWidget):
-    """Widget for managing queued studies with examination results"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -289,7 +273,6 @@ class StudyQueueWidget(QWidget):
 
     def add_study_to_queue(self, study_id: str, display_text: str, examination_result: str,
                            patient_name: str, study_date: str, description: str) -> bool:
-        """Add a study with examination result to the queue"""
 
         # Check if study is already in queue
         for queued_study in self.queued_studies:
@@ -322,7 +305,6 @@ class StudyQueueWidget(QWidget):
         return True
 
     def remove_study_from_queue(self, study_id: str) -> bool:
-        """Remove a study from the queue"""
         # Remove from internal list
         self.queued_studies = [qs for qs in self.queued_studies if qs.study_id != study_id]
 
@@ -337,30 +319,24 @@ class StudyQueueWidget(QWidget):
         return True
 
     def get_queued_studies(self) -> List[QueuedStudy]:
-        """Get all queued studies"""
         return self.queued_studies.copy()
 
     def clear_queue(self):
-        """Clear all studies from queue"""
         self.queued_studies.clear()
         self.queue_list.clear()
         self._update_queue_count()
 
     def is_study_in_queue(self, study_id: str) -> bool:
-        """Check if a study is already in the queue"""
         return any(qs.study_id == study_id for qs in self.queued_studies)
 
     def get_queue_count(self) -> int:
-        """Get number of studies in queue"""
         return len(self.queued_studies)
 
     def _update_queue_count(self):
-        """Update the queue count label"""
         count = len(self.queued_studies)
         self.queue_count_label.setText(f"({count} studii)" if count != 1 else "(1 studiu)")
 
     def _show_queue_context_menu(self, position):
-        """Show context menu for queue items"""
         item = self.queue_list.itemAt(position)
         if item:
             from PyQt6.QtWidgets import QMenu
@@ -379,14 +355,12 @@ class StudyQueueWidget(QWidget):
             menu.exec(self.queue_list.mapToGlobal(position))
 
     def _remove_selected_item(self):
-        """Remove currently selected item from queue"""
         current_item = self.queue_list.currentItem()
         if current_item:
             study_id = current_item.data(Qt.ItemDataRole.UserRole)
             self.remove_study_from_queue(study_id)
 
     def _view_result_for_item(self, item):
-        """Show the examination result for a queue item"""
         study_id = item.data(Qt.ItemDataRole.UserRole)
         queued_study = next((qs for qs in self.queued_studies if qs.study_id == study_id), None)
 

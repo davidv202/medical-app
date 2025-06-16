@@ -1,4 +1,3 @@
-from typing import Optional
 from app.core.interfaces.auth_interface import IAuthService
 from app.core.interfaces.session_interface import ISessionService
 from app.services.notification_service import NotificationService

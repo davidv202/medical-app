@@ -11,7 +11,6 @@ class HybridPacsService(IPacsService):
         self._local_file_service = local_file_service
 
     def get_all_studies(self) -> List[str]:
-        """Get all studies from both PACS and local files"""
         studies = []
 
         # Get PACS studies
@@ -31,40 +30,31 @@ class HybridPacsService(IPacsService):
         return studies
 
     def get_study_metadata(self, study_id: str) -> Dict[str, Any]:
-        """Get study metadata from appropriate source"""
         if self._is_local_study(study_id):
             return self._local_file_service.get_local_study_metadata(study_id)
         else:
             return self._pacs_service.get_study_metadata(study_id)
 
     def get_study_instances(self, study_id: str) -> List[Dict[str, Any]]:
-        """Get study instances from appropriate source"""
         if self._is_local_study(study_id):
             return self._local_file_service.get_local_study_instances(study_id)
         else:
             return self._pacs_service.get_study_instances(study_id)
 
     def get_dicom_file(self, instance_id: str) -> bytes:
-        """Get DICOM file from appropriate source"""
         if self._is_local_instance(instance_id):
             return self._local_file_service.get_local_dicom_file(instance_id)
         else:
             return self._pacs_service.get_dicom_file(instance_id)
 
-    def send_to_pacs(self, data: bytes, target_url: str) -> bool:
-        """Send data to PACS (remote only)"""
-        return self._pacs_service.send_to_pacs(data, target_url)
-
     def send_study_to_pacs(self, study_id: str, target_url: str, target_auth: tuple,
                            examination_result: str = None) -> bool:
-        """Send study to PACS with special handling for local studies"""
         if self._is_local_study(study_id):
             return self._send_local_study_to_pacs(study_id, target_url, target_auth, examination_result)
         else:
             return self._pacs_service.send_study_to_pacs(study_id, target_url, target_auth, examination_result)
 
     def get_examination_result_from_dicom(self, instance_id: str) -> str:
-        """Get examination result from DICOM"""
         if self._is_local_instance(instance_id):
             # For local instances, we need to get the study ID first
             study_id = self._get_study_id_for_local_instance(instance_id)
@@ -74,68 +64,32 @@ class HybridPacsService(IPacsService):
         else:
             return self._pacs_service.get_examination_result_from_dicom(instance_id)
 
-    def get_examination_result_from_study(self, study_id: str) -> str:
-        """Get examination result from study (works for both local and PACS)"""
-        if self._is_local_study(study_id):
-            return self._local_file_service.get_examination_result_from_local_study(study_id)
-        else:
-            # For PACS studies, try to get from first instance
-            try:
-                instances = self.get_study_instances(study_id)
-                for instance in instances:
-                    instance_id = instance.get("ID")
-                    if instance_id:
-                        result = self.get_examination_result_from_dicom(instance_id)
-                        if result:
-                            return result
-                return ""
-            except Exception as e:
-                print(f"Error getting examination result from PACS study {study_id}: {e}")
-                return ""
-
-    def add_examination_result_to_study(self, study_id: str, examination_result: str) -> bool:
-        """Add examination result to study"""
-        if self._is_local_study(study_id):
-            return self._local_file_service.add_examination_result_to_local_study(study_id, examination_result)
-        else:
-            # For PACS studies, the result will be added when sending to target PACS
-            print(f"Note: Examination result for PACS study {study_id} will be added when sending to target PACS")
-            return True
-
     # Local file management methods
     def load_local_dicom_file(self, file_path: str) -> Dict[str, Any]:
-        """Load a local DICOM file"""
         return self._local_file_service.load_dicom_file(file_path)
 
     def load_local_dicom_folder(self, folder_path: str) -> List[Dict[str, Any]]:
-        """Load DICOM files from folder"""
         return self._local_file_service.load_dicom_folder(folder_path)
 
     def clear_local_studies(self):
-        """Clear all local studies"""
         self._local_file_service.clear_local_studies()
 
     def remove_local_study(self, study_id: str) -> bool:
-        """Remove a local study"""
         if self._is_local_study(study_id):
             return self._local_file_service.remove_local_study(study_id)
         return False
 
     def get_local_studies_count(self) -> int:
-        """Get count of loaded local studies"""
         return len(self._local_file_service.get_all_local_studies())
 
     # Helper methods
     def _is_local_study(self, study_id: str) -> bool:
-        """Check if study ID belongs to a local study"""
         return study_id.startswith("local_")
 
     def _is_local_instance(self, instance_id: str) -> bool:
-        """Check if instance ID belongs to a local instance"""
         return instance_id.startswith("local_")
 
     def _get_study_id_for_local_instance(self, instance_id: str) -> Optional[str]:
-        """Get study ID for a local instance"""
         for study_id in self._local_file_service.get_all_local_studies():
             instances = self._local_file_service.get_local_study_instances(study_id)
             for instance in instances:
@@ -145,7 +99,6 @@ class HybridPacsService(IPacsService):
 
     def _send_local_study_to_pacs(self, study_id: str, target_url: str, target_auth: tuple,
                                   examination_result: str = None) -> bool:
-        """Send local study to PACS"""
         try:
             instances = self._local_file_service.get_local_study_instances(study_id)
 

@@ -102,17 +102,14 @@ class Container:
     # Backward compatibility methods
     @classmethod
     def get_hybrid_pacs_controller(cls) -> HybridPacsController:
-        """Alias for get_pacs_controller to be explicit about hybrid functionality"""
         return cls.get_pacs_controller()
 
     @classmethod
     def reset_instances(cls):
-        """Reset all instances (useful for testing)"""
         cls._instances.clear()
 
     @classmethod
     def get_service_info(cls) -> dict:
-        """Get information about loaded services"""
         info = {
             'loaded_services': list(cls._instances.keys()),
             'local_file_support': 'local_file_service' in cls._instances,

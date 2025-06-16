@@ -1,5 +1,3 @@
-# Enhanced PdfGenerator fără ID document și cu tabel compact
-
 from datetime import datetime
 from weasyprint import HTML, CSS
 from typing import Dict, Any
@@ -25,7 +23,6 @@ class PdfGenerator:
 
     def _build_html_content(self, content: str, metadata: Dict[str, Any], generated_date: str,
                             doctor_name: str = None, current_year: str = None) -> str:
-        # Construiește semnătura discretă a doctorului
         doctor_signature = ""
         if doctor_name:
             doctor_signature = f"""
@@ -38,7 +35,6 @@ class PdfGenerator:
             </div>
             """
 
-        # Template HTML complet cu atribute pentru footer
         return f"""
         <!DOCTYPE html>
         <html lang="ro">
@@ -76,7 +72,6 @@ class PdfGenerator:
         """
 
     def _format_content_for_html(self, content: str) -> str:
-        """Formatează conținutul pentru HTML, păstrând formatarea text"""
         if not content.strip():
             return "<em style='color: #94a3b8; font-size: 11px; font-style: italic;'>Nu a fost introdus niciun rezultat al explorării.</em>"
 
@@ -89,15 +84,7 @@ class PdfGenerator:
 
         for paragraph in paragraphs:
             if paragraph.strip():
-                # Înlocuiește line breaks simple cu <br>
                 paragraph = paragraph.replace('\n', '<br>')
                 formatted_paragraphs.append(f'<p>{paragraph}</p>')
 
         return ''.join(formatted_paragraphs) if formatted_paragraphs else f'<p>{content}</p>'
-
-    def generate_preview_html(self, content: str, metadata: Dict[str, Any], doctor_name: str = None) -> str:
-        """Generează HTML pentru previzualizare (fără a salva PDF-ul)"""
-        generated_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        current_year = datetime.now().strftime("%Y")
-
-        return self._build_html_content(content, metadata, generated_date, doctor_name, current_year)

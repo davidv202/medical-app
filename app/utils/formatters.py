@@ -6,7 +6,6 @@ from typing import Dict, Any
 class Formatters:
     @staticmethod
     def format_filename(patient_name: str, study_date: str, timestamp: str = None) -> str:
-        """Format a safe filename for PDF generation"""
         safe_name = re.sub(r'\W+', '_', patient_name)
         safe_date = study_date.replace("-", "")
 
@@ -17,12 +16,10 @@ class Formatters:
 
     @staticmethod
     def format_study_display_text(patient_name: str, study_date: str, description: str) -> str:
-        """Format study information for display in lists"""
         return f"{patient_name} - {study_date} - {description}"
 
     @staticmethod
     def format_metadata_display(metadata: Dict[str, Any]) -> str:
-        """Format metadata for display in text widgets"""
         formatted_items = []
 
         # Mapare pentru nume mai prietenoase
@@ -89,5 +86,4 @@ class Formatters:
 
     @staticmethod
     def sanitize_html(text: str) -> str:
-        """Basic HTML sanitization for PDF generation"""
         return text.replace('<', '&lt;').replace('>', '&gt;').replace('&', '&amp;')

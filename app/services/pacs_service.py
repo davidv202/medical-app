@@ -70,22 +70,9 @@ class PacsService(IPacsService):
         except Exception as e:
             raise PacsDataError(f"Nu am putut accesa fisierul DICOM pentru instanta {instance_id}: {e}")
 
-    def send_to_pacs(self, data: bytes, target_url: str) -> bool:
-        try:
-            response = self._http_client.post(
-                f"{target_url}/instances",
-                data=data,
-                headers={"Content-Type": "application/dicom"}
-            )
-            return response.status_code == 200
-        except Exception as e:
-            raise PacsConnectionError(f"Nu am putut trimite datele la PACS: {e}")
-
     def send_study_to_pacs(self, study_id: str, target_url: str, target_auth: tuple,
                            examination_result: str = None) -> bool:
-        """
-        Smart send: Create if new, Update if exists.
-        """
+
         try:
             instances = self.get_study_instances(study_id)
 
@@ -116,9 +103,7 @@ class PacsService(IPacsService):
             raise PacsConnectionError(f"Nu am putut procesa studiul în PACS: {e}")
 
     def _find_existing_study_in_target(self, source_study_id: str, target_url: str, target_auth: tuple) -> str:
-        """
-        Find if study already exists in target PACS. Returns target study ID if found.
-        """
+
         try:
             # Get Study Instance UID from source
             source_metadata = self.get_study_metadata(source_study_id)
@@ -156,9 +141,7 @@ class PacsService(IPacsService):
 
     def _update_existing_study(self, target_study_id: str, target_url: str, target_auth: tuple,
                                examination_result: str) -> bool:
-        """
-        Update existing study in target PACS with new examination result.
-        """
+
         try:
             print(f"🔄 Updating study {target_study_id} with new result...")
 
@@ -184,9 +167,7 @@ class PacsService(IPacsService):
             return False
 
     def _create_new_study(self, study_id: str, target_url: str, target_auth: tuple, examination_result: str) -> bool:
-        """
-        Create new study in target PACS.
-        """
+
         try:
             instances = self.get_study_instances(study_id)
             success_count = 0
@@ -255,9 +236,7 @@ class PacsService(IPacsService):
             return False
 
     def _delete_existing_study(self, target_study_id: str, target_url: str, target_auth: tuple) -> bool:
-        """
-        Delete existing study from target PACS.
-        """
+
         try:
             print(f"🗑️ Deleting existing study {target_study_id}...")
             delete_response = self._http_client.delete(f"{target_url}/studies/{target_study_id}", auth=target_auth)
