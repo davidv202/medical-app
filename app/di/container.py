@@ -68,8 +68,11 @@ class Container:
     def get_pacs_service(cls) -> PacsService:
         http_client = cls.get_http_client()
         settings = Settings()
+
+        pacs_url, pacs_auth = settings.get_source_pacs_config()
+
         return cls._get_or_create('pacs_service', lambda: PacsService(
-            http_client, settings.PACS_URL, settings.PACS_AUTH
+            http_client, pacs_url, pacs_auth
         ))
 
     @classmethod

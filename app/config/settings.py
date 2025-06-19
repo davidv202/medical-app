@@ -1,5 +1,7 @@
 import os
 
+from PyQt6.QtCore import QSettings
+
 
 class Settings:
     # Database settings
@@ -10,6 +12,9 @@ class Settings:
     PACS_AUTH = ("orthanc", "orthanc")
     PACS_URL_2 = "http://localhost:8052"
     PACS_AUTH_2 = ("orthanc", "orthanc")
+
+    SELECTED_SOURCE_PACS_ID = None
+    SELECTED_TARGET_PACS_ID = None
 
     # File paths
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,6 +39,43 @@ class Settings:
     # Local file validation settings
     MIN_DICOM_FILE_SIZE = 128  # Minimum file size in bytes to consider as DICOM
     MAX_DICOM_FILE_SIZE = 500 * 1024 * 1024  # Maximum file size (500MB)
+
+    @classmethod
+    def set_source_pacs_id(cls, pacs_id: int):
+        cls.SELECTED_SOURCE_PACS_ID = pacs_id
+
+    @classmethod
+    def set_target_pacs_id(cls, pacs_id: int):
+        cls.SELECTED_TARGET_PACS_ID = pacs_id
+
+    @classmethod
+    def get_source_pacs_config(cls):
+        if cls.SELECTED_SOURCE_PACS_ID:
+            try:
+                from app.di.container import Container
+                pacs_url_service = Container.get_pacs_url_service()
+                config = pacs_url_service.get_pacs_config_by_id(cls.SELECTED_SOURCE_PACS_ID)
+                if config:
+                    return config
+            except Exception as e:
+                print(f"Warning: Could not load source PACS config: {e}")
+
+        return cls.get_pacs_config()
+
+    @classmethod
+    def get_target_pacs_config(cls):
+        if cls.SELECTED_TARGET_PACS_ID:
+            try:
+                from app.di.container import Container
+                pacs_url_service = Container.get_pacs_url_service()
+                config = pacs_url_service.get_pacs_config_by_id(cls.SELECTED_TARGET_PACS_ID)
+                if config:
+                    return config
+            except Exception as e:
+                print(f"Warning: Could not load target PACS config: {e}")
+
+        # Fallback to secondary PACS
+        return cls.PACS_URL_2, cls.PACS_AUTH_2
 
     @classmethod
     def get_pacs_config(cls):

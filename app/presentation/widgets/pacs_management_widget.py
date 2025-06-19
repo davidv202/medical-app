@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLineEdit, QCheckBox,
     QPushButton, QHBoxLayout, QLabel, QGroupBox, QTableWidget,
-    QTableWidgetItem, QHeaderView, QSplitter
+    QTableWidgetItem, QHeaderView, QSplitter, QComboBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
+from app.config.settings import Settings
 from app.di.container import Container
 from app.services.notification_service import NotificationService
 
@@ -183,11 +184,27 @@ class PacsManagementWidget(QWidget):
         self.create_pacs_button.setObjectName("CreateButton")
         self.create_pacs_button.clicked.connect(self._handle_create_or_update_pacs)
 
+        # Global PACS Selection
+        selection_group = QGroupBox("Selectare PACS Global")
+        selection_layout = QFormLayout(selection_group)
+
+        self.source_pacs_combo = QComboBox()
+        self.source_pacs_combo.setObjectName("SourcePacsCombo")
+        self.source_pacs_combo.currentIndexChanged.connect(self._on_source_pacs_changed)
+
+        self.target_pacs_combo = QComboBox()
+        self.target_pacs_combo.setObjectName("TargetPacsCombo")
+        self.target_pacs_combo.currentIndexChanged.connect(self._on_target_pacs_changed)
+
+        selection_layout.addRow("PACS Sursă (pentru citire):", self.source_pacs_combo)
+        selection_layout.addRow("PACS Țintă (pentru trimitere):", self.target_pacs_combo)
+
         pacs_form_buttons_layout.addWidget(self.clear_pacs_button)
         pacs_form_buttons_layout.addWidget(self.cancel_pacs_button)
         pacs_form_buttons_layout.addWidget(self.create_pacs_button)
 
         layout.addLayout(pacs_form_buttons_layout)
+        layout.addWidget(selection_group)
         layout.addStretch()
 
         return widget
@@ -202,17 +219,14 @@ class PacsManagementWidget(QWidget):
         self.pacs_search_input.setFocus()
 
     def clear_search_if_focused(self):
-        """Public method to clear search if focused"""
         if self.pacs_search_input.hasFocus():
             self._clear_pacs_search()
 
     def edit_selected(self):
-        """Public method to edit selected PACS"""
         self._edit_selected_pacs()
 
     # Private methods
     def _load_pacs_urls(self):
-        """Load PACS URLs into the table"""
         try:
             pacs_service = Container.get_pacs_url_service()
             pacs_urls = pacs_service.get_all_pacs_urls()
@@ -244,6 +258,8 @@ class PacsManagementWidget(QWidget):
             header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Primary
 
             self._clear_pacs_search()
+
+            self._load_pacs_combos()
 
         except Exception as e:
             self._notification_service.show_error(self, "Eroare", f"Nu s-au putut incarca URL-urile PACS: {e}")
@@ -526,7 +542,6 @@ class PacsManagementWidget(QWidget):
                     self._notification_service.show_error(self, "Eroare", f"Nu s-a putut sterge PACS-ul: {e}")
 
     def _clear_pacs_form(self):
-        """Clear PACS form"""
         self.pacs_name_input.clear()
         self.pacs_url_input.clear()
         self.pacs_username_input.clear()
@@ -536,3 +551,62 @@ class PacsManagementWidget(QWidget):
 
         if not self._editing_pacs_mode:
             self.pacs_name_input.setFocus()
+
+    def _load_pacs_combos(self):
+        try:
+            pacs_service = Container.get_pacs_url_service()
+            active_pacs = pacs_service.get_active_pacs_urls()
+
+            # Clear combos
+            self.source_pacs_combo.clear()
+            self.target_pacs_combo.clear()
+
+            # Add "Auto (Primary)" option for source
+            self.source_pacs_combo.addItem("🔄 Auto (Primary PACS)", -1)
+
+            # Add all active PACS
+            for pacs in active_pacs:
+                display_text = f"{pacs.name} ({pacs.url})"
+                if pacs.is_primary:
+                    display_text = f"⭐ {display_text}"
+
+                self.source_pacs_combo.addItem(display_text, pacs.id)
+                self.target_pacs_combo.addItem(display_text, pacs.id)
+
+            # Set current selections
+            settings = Settings()
+
+            # Set source combo
+            if settings.SELECTED_SOURCE_PACS_ID:
+                for i in range(self.source_pacs_combo.count()):
+                    if self.source_pacs_combo.itemData(i) == settings.SELECTED_SOURCE_PACS_ID:
+                        self.source_pacs_combo.setCurrentIndex(i)
+                        break
+
+            # Set target combo
+            if settings.SELECTED_TARGET_PACS_ID:
+                for i in range(self.target_pacs_combo.count()):
+                    if self.target_pacs_combo.itemData(i) == settings.SELECTED_TARGET_PACS_ID:
+                        self.target_pacs_combo.setCurrentIndex(i)
+                        break
+
+        except Exception as e:
+            self._notification_service.show_error(self, "Eroare", f"Nu s-au putut încărca PACS-urile în combo: {e}")
+
+    def _on_source_pacs_changed(self, index):
+        pacs_id = self.source_pacs_combo.itemData(index)
+
+        if pacs_id == -1:  # Auto mode
+            Settings.set_source_pacs_id(None)
+            print("Source PACS set to Auto (Primary)")
+        else:
+            Settings.set_source_pacs_id(pacs_id)
+            pacs_name = self.source_pacs_combo.currentText()
+            print(f"Source PACS set to: {pacs_name}")
+
+    def _on_target_pacs_changed(self, index):
+        pacs_id = self.target_pacs_combo.itemData(index)
+
+        Settings.set_target_pacs_id(pacs_id)
+        pacs_name = self.target_pacs_combo.currentText()
+        print(f"Target PACS set to: {pacs_name}")

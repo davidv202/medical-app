@@ -127,6 +127,9 @@ class HybridPacsController:
                 self._notification_service.show_warning(parent_widget, "Atenție", "Nu sunt studii în queue.")
                 return False
 
+            settings = Settings()
+            target_url, target_auth = settings.get_target_pacs_config()
+
             # Confirm send operation
             study_count = len(queued_studies)
             studies_with_results = sum(1 for qs in queued_studies if qs.examination_result.strip())
@@ -147,8 +150,7 @@ class HybridPacsController:
                 return False
 
             # Debug authentication
-            target_auth = self._settings.PACS_AUTH_2 if target_url == self._settings.PACS_URL_2 else self._settings.PACS_AUTH
-            print(f"Debug: Sending to {target_url} with auth {target_auth[0]}:***")
+            print(f"Debug: Sending to selected target PACS {target_url} with auth {target_auth[0]}:***")
 
             # Send studies
             success_count = 0

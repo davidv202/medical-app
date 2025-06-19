@@ -467,18 +467,19 @@ class EnhancedPacsView(QWidget):
         self._show_sending_progress(queued_studies)
 
     def _show_sending_progress(self, queued_studies):
-        """Show progress dialog while sending studies"""
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.send_queue_button.setEnabled(False)
         self.send_queue_button.setText("⏳ Trimitere...")
+
+        target_url, _ = self._settings.get_target_pacs_config()
 
         # Create worker thread
         self.sender_thread = QThread()
         self.sender_worker = QueueSenderWorker(
             self._pacs_controller,
             queued_studies,
-            self._settings.PACS_URL_2
+            target_url
         )
         self.sender_worker.moveToThread(self.sender_thread)
 
