@@ -1,5 +1,6 @@
+from datetime import datetime
 import enum
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Enum, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -16,3 +17,16 @@ class User(Base):
     role = Column(Enum(RoleEnum), nullable=False)
     last_name = Column(String(255), nullable=False)
     first_name = Column(String(255), nullable=False)
+
+class PacsUrl(Base):
+    __tablename__ = "pacs_urls"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    url = Column(String(512), nullable=False)
+    username = Column(String(100), nullable=True)
+    password = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=False, nullable=False)
+    is_primary = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

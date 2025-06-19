@@ -10,8 +10,13 @@ from app.core.exceptions.pacs_exceptions import PacsConnectionError, PacsDataErr
 class PacsService(IPacsService):
     def __init__(self, http_client: HttpClient, pacs_url: str, pacs_auth: tuple):
         self._http_client = http_client
-        self._pacs_url = pacs_url
-        self._pacs_auth = pacs_auth
+
+        if pacs_url and pacs_auth:
+            self._pacs_url = pacs_url
+            self._pacs_auth = pacs_auth
+        else:
+            from app.config.settings import Settings
+            self._pacs_url, self._pacs_auth = Settings.get_pacs_config()
 
     def get_all_studies(self) -> List[str]:
         try:

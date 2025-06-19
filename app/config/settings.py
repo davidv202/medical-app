@@ -36,6 +36,16 @@ class Settings:
     MAX_DICOM_FILE_SIZE = 500 * 1024 * 1024  # Maximum file size (500MB)
 
     @classmethod
+    def get_pacs_config(cls):
+        try:
+            from app.di.container import Container
+            pacs_url_service = Container.get_pacs_url_service()
+            return pacs_url_service.get_primary_pacs_config()
+        except Exception as e:
+            print(f"Warning: Could not load PACS Config: {e}")
+            return cls.PACS_URL, cls.PACS_AUTH
+
+    @classmethod
     def get_local_cache_path(cls) -> str:
         return os.path.join(cls.BASE_DIR, cls.LOCAL_STUDIES_CACHE_DIR)
 

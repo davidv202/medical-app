@@ -7,9 +7,11 @@ from app.infrastructure.pdf_generator import PdfGenerator
 
 # Repositories
 from app.repositories.user_repository import UserRepository
+from app.repositories.pacs_url_repository import PacsUrlRepository
 
 # Services
 from app.services.auth_service import AuthService
+from app.services.pacs_url_service import PacsUrlService
 from app.services.session_service import SessionService
 from app.services.pacs_service import PacsService
 from app.services.local_file_service import LocalFileService
@@ -49,6 +51,11 @@ class Container:
         return cls._get_or_create('user_repository', lambda: UserRepository(db_config))
 
     @classmethod
+    def get_pacs_url_repository(cls) -> PacsUrlRepository:
+        db_config = cls.get_database_config()
+        return cls._get_or_create('pacs_url_repository', lambda: PacsUrlRepository(db_config))
+
+    @classmethod
     def get_auth_service(cls) -> AuthService:
         user_repo = cls.get_user_repository()
         return cls._get_or_create('auth_service', lambda: AuthService(user_repo))
@@ -85,6 +92,11 @@ class Container:
         return cls._get_or_create('pdf_service', lambda: PdfService(pdf_generator))
 
     @classmethod
+    def get_pacs_url_service(cls) -> PacsUrlService:
+        pacs_url_repo = cls.get_pacs_url_repository()
+        return cls._get_or_create('pacs_url_service', lambda: PacsUrlService(pacs_url_repo))
+
+    @classmethod
     def get_auth_controller(cls) -> AuthController:
         auth_service = cls.get_auth_service()
         session_service = cls.get_session_service()
@@ -98,7 +110,6 @@ class Container:
             hybrid_pacs_service, pdf_service
         ))
 
-    # Backward compatibility methods
     @classmethod
     def get_hybrid_pacs_controller(cls) -> HybridPacsController:
         return cls.get_pacs_controller()
@@ -116,7 +127,6 @@ class Container:
             'pdf_support': 'pdf_service' in cls._instances
         }
 
-        # Check if pydicom is available
         try:
             import pydicom
             info['pydicom_available'] = True
