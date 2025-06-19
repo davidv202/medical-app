@@ -1,4 +1,3 @@
-# app/presentation/views/main_view.py - Updated for Enhanced PACS Support
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QStackedWidget, QLabel
 )
@@ -29,18 +28,16 @@ class MainView(QWidget):
         nav_bar = QHBoxLayout(self.nav_widget)
 
         # Navigation buttons
-        self.studies_button = QPushButton("Enhanced Studies")
+        self.studies_button = QPushButton("Studies")
         self.studies_button.setObjectName("NavButton")
         self.patients_button = QPushButton("Patients")
         self.patients_button.setObjectName("NavButton")
 
-        # User info and logout
         current_user = self._auth_controller.get_current_user()
         username = current_user.username if current_user else "Unknown"
         role = current_user.role.value.title() if current_user else "Unknown"
         full_name = current_user.get_full_name() if current_user and hasattr(current_user, 'get_full_name') else ""
 
-        # Enhanced user display
         user_display = f"{full_name} ({username})" if full_name else username
         self.user_label = QLabel(f"{user_display} | {role}")
         self.user_label.setObjectName("UserLabel")
@@ -48,12 +45,10 @@ class MainView(QWidget):
         self.logout_button = QPushButton("Logout")
         self.logout_button.setObjectName("LogoutButton")
 
-        # Connect navigation
         self.studies_button.clicked.connect(lambda: self._switch_page(0))
         self.patients_button.clicked.connect(lambda: self._switch_page(1))
         self.logout_button.clicked.connect(self._handle_logout)
 
-        # Layout navigation bar
         nav_bar.addWidget(self.studies_button)
         nav_bar.addWidget(self.patients_button)
         nav_bar.addStretch()
@@ -62,7 +57,6 @@ class MainView(QWidget):
 
         main_layout.addWidget(self.nav_widget)
 
-        # Pages with enhanced functionality
         self.pages = QStackedWidget()
 
         self.pacs_page = EnhancedPacsView(self._pacs_controller, self._auth_controller)
@@ -73,17 +67,14 @@ class MainView(QWidget):
 
         main_layout.addWidget(self.pages)
 
-        # Set initial page
         self._switch_page(0)
 
     def _switch_page(self, index: int):
         self.pages.setCurrentIndex(index)
 
-        # Update button states
         self.studies_button.setProperty("active", index == 0)
         self.patients_button.setProperty("active", index == 1)
 
-        # Refresh styles to show active state
         self.studies_button.style().unpolish(self.studies_button)
         self.studies_button.style().polish(self.studies_button)
         self.patients_button.style().unpolish(self.patients_button)

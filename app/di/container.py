@@ -92,7 +92,6 @@ class Container:
 
     @classmethod
     def get_pacs_controller(cls) -> HybridPacsController:
-        # Use hybrid PACS service instead of regular PACS service
         hybrid_pacs_service = cls.get_hybrid_pacs_service()
         pdf_service = cls.get_pdf_service()
         return cls._get_or_create('hybrid_pacs_controller', lambda: HybridPacsController(

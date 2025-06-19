@@ -1,4 +1,3 @@
-# app/config/settings.py - Updated with Local File Support
 import os
 
 
@@ -25,8 +24,6 @@ class Settings:
     LOCAL_STUDIES_CACHE_DIR = "local_studies_cache"
     SUPPORTED_DICOM_EXTENSIONS = ['.dcm', '.dicom', '.dic']
 
-    # Local file management settings
-    MAX_LOCAL_STUDIES = 1000  # Maximum number of local studies to keep in memory
     AUTO_CLEANUP_CACHE = True  # Automatically clean up invalid cache entries
     VERIFY_DICOM_FILES = True  # Verify DICOM files before loading
 
@@ -68,6 +65,5 @@ class Settings:
             'pacs_urls': [cls.PACS_URL, cls.PACS_URL_2],
             'pdf_output_dir': cls.PDF_OUTPUT_DIR,
             'local_cache_dir': cls.LOCAL_STUDIES_CACHE_DIR,
-            'supported_extensions': cls.SUPPORTED_DICOM_EXTENSIONS,
-            'max_local_studies': cls.MAX_LOCAL_STUDIES
+            'supported_extensions': cls.SUPPORTED_DICOM_EXTENSIONS
         }

@@ -7,6 +7,7 @@ cssselect2==0.8.0
 fonttools==4.58.1
 greenlet==3.2.2
 idna==3.10
+numpy==2.3.0
 pillow==11.2.1
 pycparser==2.22
 pydicom==3.0.1

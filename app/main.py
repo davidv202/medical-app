@@ -9,10 +9,8 @@ from app.config.settings import Settings
 
 
 def setup_application():
-    # Ensure required directories exist
     settings = Settings()
 
-    # Create necessary directories
     os.makedirs(settings.PDF_OUTPUT_DIR, exist_ok=True)
     os.makedirs(settings.PDF_PREVIEW_DIR, exist_ok=True)
     os.makedirs("tmp_pdfs/preview", exist_ok=True)
@@ -44,11 +42,9 @@ def main():
     try:
         setup_application()
 
-        # Initialize dependency injection container
         print("Initializing services...")
         auth_controller = Container.get_auth_controller()
 
-        # Create and show login window
         print("Opening login window...")
         login_window = LoginView(auth_controller)
         login_window.show()
@@ -59,7 +55,6 @@ def main():
 
         print("Application started successfully")
 
-        # Start the application event loop
         sys.exit(app.exec())
 
     except Exception as e:

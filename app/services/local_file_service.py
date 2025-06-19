@@ -18,10 +18,8 @@ class LocalFileService(ILocalFileService):
         self.instance_files: Dict[str, str] = {}  # instance_id -> file_path
         self.examination_results: Dict[str, str] = {}  # study_id -> examination_result
 
-        # Create cache directory
         os.makedirs(cache_dir, exist_ok=True)
 
-        # Load cached data if exists
         self._load_cache()
 
     def load_dicom_file(self, file_path: str) -> Dict[str, Any]:
@@ -30,20 +28,15 @@ class LocalFileService(ILocalFileService):
             if not os.path.exists(file_path):
                 raise FileNotFoundError(f"File not found: {file_path}")
 
-            # Read DICOM file
             dataset = pydicom.dcmread(file_path)
 
-            # Extract metadata
             metadata = self._extract_metadata_from_dataset(dataset)
 
-            # Create unique study ID for local file
             study_instance_uid = getattr(dataset, 'StudyInstanceUID', str(uuid.uuid4()))
             study_id = f"local_{abs(hash(study_instance_uid)) % 1000000}"
 
-            # Create instance data
             instance_id = f"local_{abs(hash(getattr(dataset, 'SOPInstanceUID', str(uuid.uuid4())))) % 1000000}"
 
-            # Store in memory
             self.local_studies[study_id] = metadata
             self.instance_files[instance_id] = file_path
 
@@ -59,11 +52,9 @@ class LocalFileService(ILocalFileService):
                 "InstanceNumber": getattr(dataset, 'InstanceNumber', 1)
             }
 
-            # Check if instance already exists
             if not any(inst["ID"] == instance_id for inst in self.study_instances[study_id]):
                 self.study_instances[study_id].append(instance_data)
 
-            # Save cache
             self._save_cache()
 
             return {
@@ -82,12 +73,10 @@ class LocalFileService(ILocalFileService):
         loaded_studies = []
         study_files = {}  # study_id -> list of files
 
-        # Scan folder for DICOM files
         for root, dirs, files in os.walk(folder_path):
             for file in files:
                 file_path = os.path.join(root, file)
 
-                # Check if it's a DICOM file
                 if self._is_dicom_file(file_path):
                     try:
                         result = self.load_dicom_file(file_path)
@@ -107,7 +96,6 @@ class LocalFileService(ILocalFileService):
                         print(f"Warning: Could not load {file_path}: {e}")
                         continue
 
-        # Update file counts
         for study_data in loaded_studies:
             study_id = study_data["study_id"]
             study_data["file_count"] = len(study_files.get(study_id, []))
@@ -222,19 +210,15 @@ class LocalFileService(ILocalFileService):
 
     def _is_dicom_file(self, file_path: str) -> bool:
         try:
-            # Check file extension first
             ext = os.path.splitext(file_path)[1].lower()
             if ext in ['.dcm', '.dicom']:
                 return True
 
-            # Try to read as DICOM
             with open(file_path, 'rb') as f:
-                # Read first few bytes to check DICOM header
                 header = f.read(132)
                 if len(header) >= 132 and header[128:132] == b'DICM':
                     return True
 
-                # Some DICOM files don't have the preamble, try to parse
                 f.seek(0)
                 try:
                     pydicom.dcmread(f, stop_before_pixels=True)
@@ -276,44 +260,9 @@ class LocalFileService(ILocalFileService):
                 self.instance_files = cache_data.get("instance_files", {})
                 self.examination_results = cache_data.get("examination_results", {})
 
-                # Verify that cached files still exist
-                self._verify_cached_files()
-
         except Exception as e:
             print(f"Warning: Could not load cache: {e}")
-            # Reset to empty state
             self.local_studies = {}
             self.study_instances = {}
             self.instance_files = {}
             self.examination_results = {}
-
-    def _verify_cached_files(self):
-        invalid_instances = []
-
-        for instance_id, file_path in self.instance_files.items():
-            if not os.path.exists(file_path):
-                invalid_instances.append(instance_id)
-
-        # Remove invalid instances
-        for instance_id in invalid_instances:
-            del self.instance_files[instance_id]
-
-            # Remove from study instances
-            for study_id in list(self.study_instances.keys()):
-                self.study_instances[study_id] = [
-                    inst for inst in self.study_instances[study_id]
-                    if inst.get("ID") != instance_id
-                ]
-
-                # Remove study if no instances left
-                if not self.study_instances[study_id]:
-                    if study_id in self.local_studies:
-                        del self.local_studies[study_id]
-                    if study_id in self.examination_results:
-                        del self.examination_results[study_id]
-                    del self.study_instances[study_id]
-
-        # Save cleaned cache
-        if invalid_instances:
-            self._save_cache()
-            print(f"Removed {len(invalid_instances)} invalid cached file references")
