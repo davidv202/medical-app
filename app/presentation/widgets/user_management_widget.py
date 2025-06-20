@@ -98,7 +98,6 @@ class UserManagementWidget(QWidget):
         self.refresh_button.clicked.connect(self.refresh_data)
 
         self.edit_user_button = QPushButton("Modifica user")
-        self.edit_user_button.setObjectName("EditButton")
         self.edit_user_button.clicked.connect(self._edit_selected_user)
         self.edit_user_button.setEnabled(False)
 

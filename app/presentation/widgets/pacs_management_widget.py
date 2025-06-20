@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from app.config.settings import Settings
 from app.di.container import Container
 from app.services.notification_service import NotificationService
 
@@ -97,7 +96,6 @@ class PacsManagementWidget(QWidget):
         self.refresh_pacs_button.clicked.connect(self.refresh_data)
 
         self.edit_pacs_button = QPushButton("Modifica PACS")
-        self.edit_pacs_button.setObjectName("EditButton")
         self.edit_pacs_button.clicked.connect(self._edit_selected_pacs)
         self.edit_pacs_button.setEnabled(False)
 
@@ -206,23 +204,6 @@ class PacsManagementWidget(QWidget):
 
         self.restart_app_button = QPushButton("🔄 Restart Aplicație")
         self.restart_app_button.setObjectName("RestartButton")
-        self.restart_app_button.setStyleSheet("""
-            QPushButton#RestartButton {
-                background: #f59e0b;
-                color: white;
-                font-weight: 600;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 6px;
-                font-size: 13px;
-            }
-            QPushButton#RestartButton:hover {
-                background: #d97706;
-            }
-            QPushButton#RestartButton:pressed {
-                background: #b45309;
-            }
-        """)
         self.restart_app_button.clicked.connect(self._restart_application)
 
         restart_button_layout.addStretch()
@@ -543,13 +524,13 @@ class PacsManagementWidget(QWidget):
 
                 # Mark current selections with indicators
                 if pacs.id == source_pacs_id:
-                    source_display = f"📖 {display_text}"  # Reading icon for source
+                    source_display = f"{display_text}"  # Reading icon for source
                     source_found = True
                 else:
                     source_display = display_text
 
                 if pacs.id == target_pacs_id:
-                    target_display = f"📤 {display_text}"  # Send icon for target
+                    target_display = f"{display_text}"  # Send icon for target
                     target_found = True
                 else:
                     target_display = display_text

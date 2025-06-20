@@ -1,9 +1,12 @@
 /* ==========================================================================
-   MEDICAL PACS APPLICATION - PROFESSIONAL MEDICAL INTERFACE
-   Clean, Clinical, Trustworthy Design for Healthcare Professionals
+   MEDICAL PACS APPLICATION - CLEAN STYLESHEET (NO PROPERTIES)
+   Clean, organized styling without property selectors
    ========================================================================== */
 
-/* BASE MEDICAL STYLING */
+/* ==========================================================================
+   1. BASE STYLES
+   ========================================================================== */
+
 QWidget {
     background-color: #e2e8f0;
     color: #1e293b;
@@ -18,16 +21,35 @@ QWidget:focus {
     outline: none;
 }
 
-/* MAIN WINDOW - MEDICAL WHITE BACKGROUND */
+/* ==========================================================================
+   2. MAIN WINDOW & LAYOUT
+   ========================================================================== */
+
 QMainWindow {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #e2e8f0, stop:0.5 #cbd5e1, stop:1 #e2e8f0);  /* Mai întunecat */
+                stop:0 #e2e8f0, stop:0.5 #cbd5e1, stop:1 #e2e8f0);
     border: 1px solid #94a3b8;
 }
 
+QSplitter {
+    background: transparent;
+}
 
+QSplitter::handle {
+    background: #cbd5e1;
+    width: 3px;
+    height: 3px;
+    border-radius: 1px;
+}
 
-/* MEDICAL TYPOGRAPHY HIERARCHY */
+QSplitter::handle:hover {
+    background: #94a3b8;
+}
+
+/* ==========================================================================
+   3. TYPOGRAPHY HIERARCHY
+   ========================================================================== */
+
 QLabel {
     font-size: 14px;
     font-weight: 500;
@@ -37,7 +59,7 @@ QLabel {
     border: none;
 }
 
-/* MEDICAL HEADERS */
+/* Main Titles */
 QLabel#AdminTitle,
 QLabel#LoginTitle {
     font-size: 28px;
@@ -46,9 +68,9 @@ QLabel#LoginTitle {
     padding: 20px 0;
     background: transparent;
     border-bottom: 2px solid #e0e7ff;
-    text-align: center;
 }
 
+/* Section Titles */
 QLabel#SectionTitle {
     font-size: 16px;
     font-weight: 600;
@@ -60,6 +82,14 @@ QLabel#SectionTitle {
     margin: 8px 0;
 }
 
+/* Subtitles */
+QLabel#LoginSubtitle {
+    font-size: 14px;
+    font-weight: 400;
+    color: #64748b;
+}
+
+/* User Labels */
 QLabel#UserLabel {
     font-size: 13px;
     font-weight: 500;
@@ -70,7 +100,22 @@ QLabel#UserLabel {
     border-radius: 20px;
 }
 
-/* MEDICAL NAVIGATION BAR */
+/* Results Labels */
+QLabel#ResultsLabel {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    margin: 0;
+}
+
+/* ==========================================================================
+   4. NAVIGATION & CONTAINERS
+   ========================================================================== */
+
+/* Navigation Bar */
 QWidget#NavBar {
     background: #f1f5f9;
     padding: 16px 24px;
@@ -88,124 +133,79 @@ QWidget#NavBar QLabel {
     border: none;
 }
 
-/* MEDICAL NAVIGATION BUTTONS */
-QWidget#NavBar QPushButton,
-QPushButton#NavButton {
-    background: #2563eb;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 12px 24px;
-    border: none;
+/* Search Containers */
+QWidget#SearchContainer {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    min-width: 120px;
-    min-height: 40px;
+    padding: 12px;
+    margin: 4px 0;
 }
 
-QWidget#NavBar QPushButton:hover,
-QPushButton#NavButton:hover {
-    background: #3b82f6;
+QWidget#SearchableStudyList {
+    background: transparent;
+    border: none;
 }
 
-QWidget#NavBar QPushButton:pressed,
-QPushButton#NavButton:pressed {
-    background: #1d4ed8;
+/* Group Boxes */
+QGroupBox {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1e40af;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    background: #f8fafc;
 }
 
-QPushButton#NavButton {
-    background: #059669;
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 12px;
+    padding: 0 8px 0 8px;
+    background: #ffffff;
+    border-radius: 4px;
 }
 
-/* MEDICAL DATA LISTS */
-QListWidget#QueueList,
-QListWidget#StudyList {
+/* ==========================================================================
+   5. FORM INPUTS
+   ========================================================================== */
+
+/* Text Inputs */
+QLineEdit {
     background: #ffffff;
     border: 2px solid #e2e8f0;
     border-radius: 8px;
-    padding: 8px;
-    alternate-background-color: #f8fafc;
-    gridline-color: #e2e8f0;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #334155;
+    min-height: 20px;
+    selection-background-color: #dbeafe;
+}
+
+QLineEdit:focus {
+    border: 2px solid #2563eb;
+    background: #ffffff;
     outline: none;
 }
 
-QListWidget#StudyList {
-    min-width: 600px;
-    min-height: 400px;
-    font-size: 14px;
+QLineEdit::placeholder {
+    color: #94a3b8;
+    font-style: italic;
 }
 
-QListWidget#StudyList::item {
-    padding: 12px 16px;
-    margin: 2px 0;
-    color: #334155;
-    background: #ffffff;
-    border: 1px solid #f1f5f9;
-    border-radius: 6px;
-    min-height: 20px;
+/* Specific Input Types */
+QLineEdit#UsernameInput,
+QLineEdit#PasswordInput {
+    min-width: 280px;
+    font-weight: 500;
 }
 
-QListWidget#StudyList::item:selected {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #93c5fd;
-    font-weight: 600;
+QLineEdit#SearchInput {
+    min-width: 200px;
 }
 
-QListWidget#StudyList::item:hover {
-    background: #f0f9ff;
-    border: 1px solid #bfdbfe;
-}
-
-/* MEDICAL SCROLLBARS */
-QScrollBar:vertical {
-    background: #f1f5f9;
-    width: 12px;
-    border-radius: 6px;
-    margin: 0;
-}
-
-QScrollBar::handle:vertical {
-    background: #cbd5e1;
-    border-radius: 6px;
-    min-height: 30px;
-    margin: 2px;
-}
-
-QScrollBar::handle:vertical:hover {
-    background: #94a3b8;
-}
-
-QScrollBar::handle:vertical:pressed {
-    background: #64748b;
-}
-
-QScrollBar:horizontal {
-    background: #f1f5f9;
-    height: 12px;
-    border-radius: 6px;
-    margin: 0;
-}
-
-QScrollBar::handle:horizontal {
-    background: #cbd5e1;
-    border-radius: 6px;
-    min-width: 30px;
-    margin: 2px;
-}
-
-QScrollBar::add-line, QScrollBar::sub-line {
-    background: none;
-    border: none;
-    width: 0;
-    height: 0;
-}
-
-QScrollBar::corner {
-    background: #f1f5f9;
-    border-radius: 6px;
-}
-
-/* MEDICAL TEXT AREAS */
+/* Text Areas */
 QTextEdit {
     background: #ffffff;
     border: 2px solid #e2e8f0;
@@ -223,142 +223,17 @@ QTextEdit:focus {
     background: #ffffff;
 }
 
-/* MEDICAL ACTION BUTTONS */
-QPushButton {
-    background: #059669;
-    color: white;
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    margin: 4px 2px;
-    min-height: 20px;
-    min-width: 120px;
+QTextEdit#MetadataWidget {
+    background: #f8fafc;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
 }
 
-QPushButton:hover {
-    background: #047857;
+QTextEdit#ResultWidget {
+    min-height: 150px;
 }
 
-QPushButton:pressed {
-    background: #065f46;
-}
-
-QPushButton:disabled {
-    background: #e2e8f0;
-    color: #94a3b8;
-}
-
-/* CRITICAL ACTION BUTTONS */
-QPushButton#LogoutButton {
-    background: #dc2626;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-QPushButton#LogoutButton:hover {
-    background: #b91c1c;
-}
-
-QPushButton#LogoutButton:pressed {
-    background: #991b1b;
-}
-
-/* SPECIALIZED MEDICAL BUTTONS */
-QPushButton#PreviewButton,
-QPushButton#PrintButton,
-QPushButton#GeneratePDFButton {
-    background: #7c3aed;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    min-width: 120px;
-}
-
-QPushButton#PreviewButton:hover,
-QPushButton#PrintButton:hover,
-QPushButton#GeneratePDFButton:hover {
-    background: #6d28d9;
-}
-
-QPushButton#CreateButton {
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-}
-
-QPushButton#CreateButton:hover {
-    background: #1d4ed8;
-}
-
-/* MEDICAL DIALOG BOXES */
-QMessageBox {
-    background: #ffffff;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-}
-
-QMessageBox QLabel {
-    background: transparent;
-    border: none;
-    padding: 20px;
-    margin: 0;
-    color: #334155;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-QMessageBox QPushButton {
-    background: #2563eb;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    margin: 6px;
-    min-width: 80px;
-}
-
-QMessageBox QPushButton:hover {
-    background: #1d4ed8;
-}
-
-/* MEDICAL FORM INPUTS */
-QLineEdit#UsernameInput,
-QLineEdit#PasswordInput {
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    background: #ffffff;
-    min-width: 280px;
-    min-height: 20px;
-    color: #334155;
-    font-size: 14px;
-    font-weight: 500;
-    selection-background-color: #dbeafe;
-}
-
-QLineEdit#UsernameInput:focus,
-QLineEdit#PasswordInput:focus {
-    border: 2px solid #2563eb;
-    background: #ffffff;
-}
-
-QLineEdit#UsernameInput::placeholder,
-QLineEdit#PasswordInput::placeholder {
-    color: #94a3b8;
-    font-style: italic;
-}
-
-/* MEDICAL DROPDOWN MENUS */
+/* Dropdown Menus */
 QComboBox {
     background: #ffffff;
     border: 2px solid #e2e8f0;
@@ -397,7 +272,252 @@ QComboBox QAbstractItemView {
     padding: 4px;
 }
 
-/* MEDICAL DATA TABLES */
+/* ==========================================================================
+   6. BUTTONS
+   ========================================================================== */
+
+/* Base Button Styles */
+QPushButton {
+    background: #059669;
+    color: white;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    margin: 4px 2px;
+    min-height: 20px;
+    min-width: 120px;
+}
+
+QPushButton:hover {
+    background: #047857;
+}
+
+QPushButton:pressed {
+    background: #065f46;
+}
+
+QPushButton:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+}
+
+QPushButton:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Navigation Buttons */
+QPushButton#NavButton {
+    background: #2563eb;
+    min-width: 120px;
+    min-height: 40px;
+}
+
+QPushButton#NavButton:hover {
+    background: #3b82f6;
+}
+
+QPushButton#NavButton:pressed {
+    background: #1d4ed8;
+}
+
+/* Login Button */
+QPushButton#LoginButton {
+    background: #2563eb;
+    min-width: 200px;
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+QPushButton#LoginButton:hover {
+    background: #1d4ed8;
+}
+
+/* Action Buttons */
+QPushButton#CreateButton {
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+}
+
+QPushButton#CreateButton:hover {
+    background: #1d4ed8;
+}
+
+QPushButton#CancelButton {
+    background: #6b7280;
+    color: white;
+}
+
+QPushButton#CancelButton:hover {
+    background: #4b5563;
+}
+
+/* Critical Action Buttons */
+QPushButton#LogoutButton {
+    background: #dc2626;
+    color: white;
+}
+
+QPushButton#LogoutButton:hover {
+    background: #b91c1c;
+}
+
+QPushButton#LogoutButton:pressed {
+    background: #991b1b;
+}
+
+/* Specialized Buttons */
+QPushButton#PreviewButton,
+QPushButton#PrintButton,
+QPushButton#GeneratePDFButton {
+    background: #7c3aed;
+    color: white;
+}
+
+QPushButton#PreviewButton:hover,
+QPushButton#PrintButton:hover,
+QPushButton#GeneratePDFButton:hover {
+    background: #6d28d9;
+}
+
+QPushButton#QueueButton {
+    background: #059669;
+}
+
+QPushButton#QueueButton:hover {
+    background: #047857;
+}
+
+QPushButton#SendPACSButton {
+    background: #dc2626;
+}
+
+QPushButton#SendPACSButton:hover {
+    background: #b91c1c;
+}
+
+/* Small Utility Buttons */
+QPushButton#ClearSearchButton {
+    background: #e2e8f0;
+    color: #64748b;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px;
+    margin: 0;
+    min-height: 30px;
+    max-height: 30px;
+}
+
+QPushButton#ClearSearchButton:hover {
+    background: #cbd5e1;
+    color: #475569;
+}
+
+QPushButton#ClearSearchButton:pressed {
+    background: #94a3b8;
+    color: #1e293b;
+}
+
+/* File Operation Buttons */
+QPushButton#LoadFilesButton,
+QPushButton#LoadFolderButton {
+    background: #0891b2;
+    color: white;
+}
+
+QPushButton#LoadFilesButton:hover,
+QPushButton#LoadFolderButton:hover {
+    background: #0e7490;
+}
+
+QPushButton#ClearButton {
+    background: #dc2626;
+    color: white;
+}
+
+QPushButton#ClearButton:hover {
+    background: #b91c1c;
+}
+
+QPushButton#RestartButton {
+    background: #f59e0b;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+QPushButton#RestartButton:hover {
+    background: #d97706;
+}
+
+QPushButton#RestartButton:pressed {
+    background: #b45309;
+}
+
+/* ==========================================================================
+   7. LISTS & TABLES
+   ========================================================================== */
+
+/* List Widgets */
+QListWidget {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+    alternate-background-color: #f8fafc;
+    gridline-color: #e2e8f0;
+    outline: none;
+}
+
+QListWidget#StudyList {
+    min-width: 600px;
+    min-height: 400px;
+    font-size: 14px;
+}
+
+QListWidget#StudyList::item {
+    padding: 12px 16px;
+    margin: 2px 0;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QListWidget#StudyList::item:selected {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+    font-weight: 600;
+}
+
+QListWidget#StudyList::item:hover {
+    background: #f0f9ff;
+    border: 1px solid #bfdbfe;
+}
+
+QListWidget#QueueList {
+    min-height: 100px;
+    max-height: 150px;
+}
+
+QListWidget#QueueList::item {
+    padding: 8px 12px;
+    margin: 1px 0;
+    font-size: 12px;
+    min-height: 15px;
+}
+
+/* Table Widgets */
 QTableWidget {
     background: #ffffff;
     border: 2px solid #e2e8f0;
@@ -442,181 +562,63 @@ QHeaderView::section:last {
     border-top-right-radius: 6px;
 }
 
-/* MEDICAL FORM GROUPS */
-QGroupBox {
-    font-weight: 600;
-    font-size: 14px;
-    color: #1e40af;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    background: #f8fafc;
-}
+/* ==========================================================================
+   8. SCROLLBARS
+   ========================================================================== */
 
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 12px;
-    padding: 0 8px 0 8px;
-    background: #ffffff;
-    border-radius: 4px;
-}
-
-/* MEDICAL TOOLTIPS */
-QToolTip {
-    background: #1f2937;
-    color: #f9fafb;
-    border: 1px solid #374151;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-/* MEDICAL PROGRESS INDICATORS */
-QProgressBar {
+QScrollBar:vertical {
     background: #f1f5f9;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    text-align: center;
-    color: #334155;
-    font-weight: 600;
-    height: 24px;
+    width: 12px;
+    border-radius: 6px;
+    margin: 0;
 }
 
-QProgressBar::chunk {
-    background: #2563eb;
+QScrollBar::handle:vertical {
+    background: #cbd5e1;
     border-radius: 6px;
+    min-height: 30px;
     margin: 2px;
 }
 
-/* MEDICAL STATUS INDICATORS */
-.medical-success {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-
-.medical-warning {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde68a;
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-
-.medical-error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-
-.medical-info {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #93c5fd;
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-
-/* MEDICAL CARD LAYOUT */
-.medical-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 12px;
-}
-
-/* ACCESSIBILITY IMPROVEMENTS */
-QWidget:focus {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
-
-QPushButton:focus {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
-
-/* SEARCH INPUT STYLING */
-QLineEdit#SearchInput {
-    background: #ffffff;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 14px;
-    color: #334155;
-    min-height: 20px;
-    selection-background-color: #dbeafe;
-}
-
-QLineEdit#SearchInput:focus {
-    border: 2px solid #2563eb;
-    background: #ffffff;
-    outline: none;
-}
-
-QLineEdit#SearchInput::placeholder {
-    color: #94a3b8;
-    font-style: italic;
-}
-
-/* CLEAR SEARCH BUTTON */
-QPushButton#ClearSearchButton {
-    background: #e2e8f0;
-    color: #64748b;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 8px;
-    margin: 0;
-    min-height: 30px;
-    max-height: 30px;
-}
-
-QPushButton#ClearSearchButton:hover {
-    background: #cbd5e1;
-    color: #475569;
-}
-
-QPushButton#ClearSearchButton:pressed {
+QScrollBar::handle:vertical:hover {
     background: #94a3b8;
-    color: #1e293b;
 }
 
-/* SEARCH RESULTS LABEL */
-QLabel#ResultsLabel {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 8px;
-    color: #64748b;
-    background: transparent;
-    border: none;
+QScrollBar::handle:vertical:pressed {
+    background: #64748b;
+}
+
+QScrollBar:horizontal {
+    background: #f1f5f9;
+    height: 12px;
+    border-radius: 6px;
     margin: 0;
 }
 
-/* ENHANCED STUDY LIST FOR SEARCH */
-QWidget#SearchableStudyList {
-    background: transparent;
+QScrollBar::handle:horizontal {
+    background: #cbd5e1;
+    border-radius: 6px;
+    min-width: 30px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #94a3b8;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    background: none;
     border: none;
+    width: 0;
+    height: 0;
 }
 
-/* SEARCH CONTAINER STYLING */
-QWidget#SearchContainer {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 4px 0;
+QScrollBar::corner {
+    background: #f1f5f9;
+    border-radius: 6px;
 }
 
-/* DIRECT STUDY LIST SCROLLBAR STYLING */
+/* Direct scrollbar styling for specific widgets */
 QListWidget#StudyList QScrollBar:vertical {
     background: #f8fafc;
     width: 12px;
@@ -641,48 +643,225 @@ QListWidget#StudyList QScrollBar::sub-line {
     border: none;
 }
 
-/* TAB WIDGET PENTRU STUDIES */
+/* ==========================================================================
+   9. TAB WIDGETS
+   ========================================================================== */
+
 QTabWidget#StudiesTab {
-   background: #ffffff;
-   border: 2px solid #e2e8f0;
-   border-radius: 12px;
-   margin: 4px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    margin: 4px;
 }
 
 QTabWidget#StudiesTab::pane {
-   background: #ffffff;
-   border: 1px solid #e2e8f0;
-   border-radius: 0px 10px 10px 10px;
-   padding: 16px;
-   top: -1px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0px 10px 10px 10px;
+    padding: 16px;
+    top: -1px;
 }
 
 QTabWidget#StudiesTab QTabBar::tab {
-   background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-               stop:0 #f1f5f9, stop:0.5 #e2e8f0, stop:1 #cbd5e1);
-   color: #64748b;
-   border: 1px solid #d1d5db;
-   border-bottom: none;
-   padding: 14px 24px;
-   margin-right: 2px;
-   font-size: 15px;
-   font-weight: 600;
-   min-width: 140px;
-   border-top-left-radius: 10px;
-   border-top-right-radius: 10px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #f1f5f9, stop:0.5 #e2e8f0, stop:1 #cbd5e1);
+    color: #64748b;
+    border: 1px solid #d1d5db;
+    border-bottom: none;
+    padding: 14px 24px;
+    margin-right: 2px;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 140px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 QTabWidget#StudiesTab QTabBar::tab:selected {
-   background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-               stop:0 #ffffff, stop:0.05 #f0f9ff, stop:1 #ffffff);
-   color: #1e40af;
-   border: 2px solid #93c5fd;
-   border-bottom: 2px solid #ffffff;
-   margin-bottom: -2px;
-   font-weight: 700;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #ffffff, stop:0.05 #f0f9ff, stop:1 #ffffff);
+    color: #1e40af;
+    border: 2px solid #93c5fd;
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -2px;
+    font-weight: 700;
+}
+
+QTabWidget#StudiesTab QTabBar::tab:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #f8fafc, stop:0.5 #f1f5f9, stop:1 #e2e8f0);
+    color: #475569;
 }
 
 QTabWidget#StudiesTab QTabBar::tab:focus {
-   outline: 2px solid #3b82f6;
-   outline-offset: 2px;
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
 }
+
+QTabWidget#AdminTabs {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+QTabWidget#AdminTabs::pane {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0px 8px 8px 8px;
+    padding: 12px;
+}
+
+QTabWidget#AdminTabs QTabBar::tab {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    padding: 12px 20px;
+    margin-right: 1px;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 120px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+QTabWidget#AdminTabs QTabBar::tab:selected {
+    background: #ffffff;
+    color: #1e40af;
+    border: 2px solid #2563eb;
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -2px;
+    font-weight: 700;
+}
+
+QTabWidget#AdminTabs QTabBar::tab:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* ==========================================================================
+   10. PROGRESS & STATUS INDICATORS
+   ========================================================================== */
+
+QProgressBar {
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: center;
+    color: #334155;
+    font-weight: 600;
+    height: 24px;
+}
+
+QProgressBar::chunk {
+    background: #2563eb;
+    border-radius: 6px;
+    margin: 2px;
+}
+
+/* ==========================================================================
+   11. DIALOG BOXES
+   ========================================================================== */
+
+QMessageBox {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+QMessageBox QLabel {
+    background: transparent;
+    border: none;
+    padding: 20px;
+    margin: 0;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+QMessageBox QPushButton {
+    background: #2563eb;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    margin: 6px;
+    min-width: 80px;
+}
+
+QMessageBox QPushButton:hover {
+    background: #1d4ed8;
+}
+
+/* ==========================================================================
+   12. TOOLTIPS
+   ========================================================================== */
+
+QToolTip {
+    background: #1f2937;
+    color: #f9fafb;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   13. ACCESSIBILITY & FOCUS STATES
+   ========================================================================== */
+
+QWidget:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   14. SPECIAL SCROLL AREAS
+   ========================================================================== */
+
+QScrollArea#StudyListScrollArea {
+    background: transparent;
+    border: none;
+}
+
+QScrollArea#StudyListScrollArea QScrollBar:vertical {
+    background: #f1f5f9;
+    width: 10px;
+    border-radius: 5px;
+}
+
+QScrollArea#StudyListScrollArea QScrollBar::handle:vertical {
+    background: #cbd5e1;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollArea#StudyListScrollArea QScrollBar::handle:vertical:hover {
+    background: #94a3b8;
+}
+
+/* ==========================================================================
+   15. SPECIAL COMBO STYLES
+   ========================================================================== */
+
+QComboBox#SourcePacsCombo,
+QComboBox#TargetPacsCombo {
+    background: #ffffff;
+    border: 2px solid #2563eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+QComboBox#SourcePacsCombo:hover,
+QComboBox#TargetPacsCombo:hover {
+    background: #f0f9ff;
+    border: 2px solid #1d4ed8;
+}
+
+/* ==========================================================================
+   END OF STYLESHEET - NO PROPERTIES USED
+   ========================================================================== */
