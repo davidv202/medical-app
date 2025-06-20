@@ -1,7 +1,7 @@
 import os
 import json
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from datetime import datetime
 import pydicom
 
@@ -166,6 +166,175 @@ class LocalFileService(ILocalFileService):
         except Exception as e:
             print(f"Error removing local study: {e}")
             return False
+
+    def send_local_study_to_pacs(self, study_id: str, target_url: str, target_auth: Tuple[str, str],
+                                 examination_result: str = None, dicom_modifier_callback=None) -> bool:
+        try:
+            print(f"📤 LocalFileService: Sending local study {study_id} to {target_url}")
+
+            # Verifică că studiul există
+            if study_id not in self.local_studies:
+                raise PacsDataError(f"Local study {study_id} not found")
+
+            # Obține instanțele studiului
+            instances = self.get_local_study_instances(study_id)
+            if not instances:
+                raise PacsDataError(f"No instances found in local study {study_id}")
+
+            success_count = 0
+            total_instances = len(instances)
+
+            print(f"   📄 Found {total_instances} instances in local study")
+
+            # Importă requests pentru HTTP
+            import requests
+            from requests.auth import HTTPBasicAuth
+
+            for i, instance in enumerate(instances):
+                instance_id = instance.get("ID")
+                if not instance_id:
+                    print(f"   ⚠️ Instance {i + 1} has no ID, skipping")
+                    continue
+
+                try:
+                    print(f"   🔄 Processing local instance {i + 1}/{total_instances}: {instance_id}")
+
+                    # Citește fișierul DICOM local
+                    dicom_data = self.get_local_dicom_file(instance_id)
+                    print(f"      📥 Read local DICOM: {len(dicom_data)} bytes")
+
+                    # Aplică modificarea DICOM (ex: adăugarea rezultatului) prin callback
+                    if dicom_modifier_callback and examination_result:
+                        print(f"      📝 Applying DICOM modifications via callback...")
+                        modified_dicom_data = dicom_modifier_callback(dicom_data, examination_result)
+                        print(f"      📝 Modified DICOM: {len(modified_dicom_data)} bytes")
+                    else:
+                        modified_dicom_data = dicom_data
+                        print(f"      📝 No modifications, using original data")
+
+                    # Trimite la target PACS
+                    print(f"      📤 Sending to {target_url}/instances...")
+                    response = requests.post(
+                        f"{target_url}/instances",
+                        data=modified_dicom_data,
+                        auth=HTTPBasicAuth(*target_auth),
+                        headers={"Content-Type": "application/dicom"},
+                        timeout=30
+                    )
+
+                    print(f"      📨 Response: {response.status_code}")
+
+                    if response.status_code == 200:
+                        success_count += 1
+                        print(f"      ✅ Local instance sent successfully")
+                    else:
+                        print(f"      ❌ Failed to send local instance")
+                        print(f"         Status: {response.status_code}")
+                        if hasattr(response, 'text'):
+                            print(f"         Response: {response.text[:200]}...")
+
+                except Exception as e:
+                    print(f"      ❌ Error sending local instance {instance_id}: {e}")
+                    continue
+
+            # Rezultat final
+            print(f"   📊 Final result: {success_count}/{total_instances} local instances sent")
+
+            success = success_count == total_instances
+
+            if success:
+                print(f"   ✅ All local instances sent successfully!")
+            else:
+                print(f"   ⚠️ Partial success: {success_count}/{total_instances} instances sent")
+
+            return success
+
+        except Exception as e:
+            print(f"❌ LocalFileService: Error sending local study {study_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def get_examination_result_from_local_dicom_file(self, instance_id: str) -> str:
+        try:
+            file_path = self.instance_files.get(instance_id)
+            if not file_path or not os.path.exists(file_path):
+                # Fallback la cache-ul local
+                return self.examination_results.get(self._get_study_id_for_instance(instance_id), "")
+
+            from io import BytesIO
+
+            with open(file_path, 'rb') as f:
+                dicom_data = f.read()
+
+            dicom_dataset = pydicom.dcmread(BytesIO(dicom_data))
+
+            # PRIORITATE 1: Tag-urile noastre private cu reconstrucție chunks
+            if (0x7777, 0x0010) in dicom_dataset:
+                identifier = str(dicom_dataset[0x7777, 0x0010].value)
+                if identifier == "MEDICAL_APP_RESULT":
+                    print(f"  📖 Found our private tags in local file")
+
+                    # Verifică chunks multiple
+                    if (0x7777, 0x0020) in dicom_dataset:
+                        try:
+                            num_chunks = int(str(dicom_dataset[0x7777, 0x0020].value))
+                            print(f"  📖 Found {num_chunks} chunks in local file")
+
+                            result_parts = []
+                            for i in range(num_chunks):
+                                tag_element = 0x1001 + i
+                                if (0x7777, tag_element) in dicom_dataset:
+                                    chunk = str(dicom_dataset[0x7777, tag_element].value)
+                                    result_parts.append(chunk)
+
+                            if result_parts:
+                                complete_result = ''.join(result_parts)
+                                print(
+                                    f"  📖 Reconstructed complete result from local file: {len(complete_result)} chars")
+                                return complete_result
+                        except:
+                            pass
+
+                    # Fallback la tag simplu
+                    if (0x7777, 0x1001) in dicom_dataset:
+                        private_result = str(dicom_dataset[0x7777, 0x1001].value)
+                        print(f"  📖 Found private tag result in local file: {len(private_result)} chars")
+                        return private_result
+
+            # PRIORITATE 2: Image Comments
+            if hasattr(dicom_dataset, 'ImageComments'):
+                image_comments = str(dicom_dataset.ImageComments)
+                print(f"  📖 Found ImageComments in local file: {len(image_comments)} chars")
+                return image_comments
+
+            # PRIORITATE 3: Fallback la cache-ul nostru local
+            study_id = self._get_study_id_for_instance(instance_id)
+            if study_id and study_id in self.examination_results:
+                cached_result = self.examination_results[study_id]
+                print(f"  📖 Using cached result for local study: {len(cached_result)} chars")
+                return cached_result
+
+            return ""
+
+        except ImportError:
+            print("Warning: pydicom not available - using cached result")
+            # Fallback la cache-ul local
+            study_id = self._get_study_id_for_instance(instance_id)
+            return self.examination_results.get(study_id, "")
+        except Exception as e:
+            print(f"Error reading examination result from local DICOM: {e}")
+            # Fallback la cache-ul local
+            study_id = self._get_study_id_for_instance(instance_id)
+            return self.examination_results.get(study_id, "")
+
+    def _get_study_id_for_instance(self, instance_id: str) -> str:
+        """Helper method to find study_id for a given instance_id"""
+        for study_id, instances in self.study_instances.items():
+            for instance in instances:
+                if instance.get("ID") == instance_id:
+                    return study_id
+        return ""
 
     def _extract_metadata_from_dataset(self, dataset) -> Dict[str, Any]:
         try:

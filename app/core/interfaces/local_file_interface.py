@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 
 class ILocalFileService(ABC):
@@ -30,4 +30,9 @@ class ILocalFileService(ABC):
 
     @abstractmethod
     def get_examination_result_from_local_study(self, study_id: str) -> str:
+        pass
+
+    @abstractmethod
+    def send_local_study_to_pacs(self, study_id: str, target_url: str, target_auth: Tuple[str, str],
+                                 examination_result: str = None, dicom_modifier_callback=None) -> bool:
         pass

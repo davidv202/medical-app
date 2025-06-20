@@ -90,14 +90,12 @@ class PacsService(IPacsService):
             if existing_study_id:
                 print(f"📝 Study exists in target PACS (ID: {existing_study_id}) - UPDATING with new result")
 
-                # 1. Șterge studiul existent
                 delete_success = self._delete_existing_study(existing_study_id, target_url, target_auth)
 
                 if not delete_success:
                     print(f"❌ Failed to delete existing study, aborting update")
                     return False
 
-                # 2. Recreează cu rezultatul nou
                 print(f"🔄 Recreating study with new examination result...")
                 return self._create_new_study(study_id, target_url, target_auth, examination_result)
             else:
@@ -143,33 +141,6 @@ class PacsService(IPacsService):
         except Exception as e:
             print(f"Error searching for existing study: {e}")
             return None
-
-    def _update_existing_study(self, target_study_id: str, target_url: str, target_auth: tuple,
-                               examination_result: str) -> bool:
-
-        try:
-            print(f"🔄 Updating study {target_study_id} with new result...")
-
-            # For now, let's simplify - just delete and let the caller recreate
-            print(f"🗑️ Deleting existing study {target_study_id}...")
-            delete_response = self._http_client.delete(f"{target_url}/studies/{target_study_id}", auth=target_auth)
-
-            print(f"🗑️ Delete response status: {delete_response.status_code}")
-            if hasattr(delete_response, 'text'):
-                print(f"🗑️ Delete response: {delete_response.text[:200]}...")
-
-            if delete_response.status_code == 200:
-                print(f"✅ Existing study deleted successfully")
-                return True  # Let the main function handle recreation
-            else:
-                print(f"❌ Failed to delete existing study: {delete_response.status_code}")
-                return False
-
-        except Exception as e:
-            print(f"❌ Error updating existing study: {e}")
-            import traceback
-            traceback.print_exc()
-            return False
 
     def _create_new_study(self, study_id: str, target_url: str, target_auth: tuple, examination_result: str) -> bool:
 
@@ -265,20 +236,54 @@ class PacsService(IPacsService):
         try:
             dicom_dataset = pydicom.dcmread(BytesIO(dicom_data))
 
-            # Adaugă în Image Comments (vizibil ca "Image Comments")
-            dicom_dataset.ImageComments = examination_result[:10240]
+            # PRINCIPAL: Image Comments (0020,4000) - Funcționează pe toate instanțele DICOM
+            if len(examination_result) <= 10240:
+                dicom_dataset.ImageComments = examination_result
+                print(f"  📝 Added to ImageComments: {len(examination_result)} chars")
+            else:
+                # Pentru texte lungi, trunchiază și adaugă notificare
+                truncated_text = examination_result[:10200] + "\n\n[TRUNCATED - See private tags]"
+                dicom_dataset.ImageComments = truncated_text
+                print(f"  📝 Added truncated to ImageComments: {len(truncated_text)} chars")
 
-            # Adaugă tag-uri private pentru backup
             dicom_dataset.add_new(0x77770010, 'LO', 'MEDICAL_APP_RESULT')
-            dicom_dataset.add_new(0x77771001, 'LT', examination_result)
+
+            if len(examination_result) <= 65534:  # Limita pentru un tag LT
+                dicom_dataset.add_new(0x77771001, 'LT', examination_result)
+                print(f"  📝 Added complete result to private tag: {len(examination_result)} chars")
+            else:
+                # Împarte textul în segmente de max 65000 caractere
+                chunk_size = 65000
+                chunks = [examination_result[i:i + chunk_size] for i in range(0, len(examination_result), chunk_size)]
+
+                for i, chunk in enumerate(chunks[:10]):  # Maxim 10 chunks
+                    tag_element = 0x1001 + i  # 0x77771001, 0x77771002, etc.
+                    dicom_dataset.add_new(0x7777, tag_element, 'LT', chunk)
+                    print(f"  📝 Added chunk {i + 1} to private tag 7777,{tag_element:04X}: {len(chunk)} chars")
+
+                dicom_dataset.add_new(0x77770020, 'IS', str(len(chunks)))
+
+            try:
+                if not hasattr(dicom_dataset, 'StudyComments'):
+                    study_comment = f"EXAMINATION RESULT: {examination_result[:200]}"
+                    dicom_dataset.add_new(0x0032, 0x4000, 'LT', study_comment)
+                    print(f"  📝 Added to StudyComments: {len(study_comment)} chars")
+            except:
+                pass  # Nu-i problemă dacă nu funcționează
 
             # Salvează
             output_buffer = BytesIO()
             dicom_dataset.save_as(output_buffer, write_like_original=False)
+
+            final_size = len(output_buffer.getvalue())
+            print(f"  📝 Final DICOM size: {final_size} bytes (original: {len(dicom_data)})")
+
             return output_buffer.getvalue()
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error adding examination result to DICOM: {e}")
+            import traceback
+            traceback.print_exc()
             return dicom_data
 
     def get_examination_result_from_dicom(self, instance_id: str) -> str:
@@ -286,19 +291,57 @@ class PacsService(IPacsService):
             dicom_data = self.get_dicom_file(instance_id)
             dicom_dataset = pydicom.dcmread(BytesIO(dicom_data))
 
-            # Try to get examination result from our private tag first
-            if 0x77771001 in dicom_dataset:
-                return str(dicom_dataset[0x77771001].value)
+            # PRIORITATE 1: Tag-urile noastre private (textul complet)
+            if (0x7777, 0x0010) in dicom_dataset:
+                print(f"  📖 Found our private tags in instance {instance_id}")
 
-            # Fallback to Image Comments
+                # Verifică dacă avem un singur tag sau multiple chunks
+                if (0x7777, 0x0020) in dicom_dataset:  # Tag pentru numărul de chunks
+                    try:
+                        num_chunks = int(str(dicom_dataset[0x7777, 0x0020].value))
+                        print(f"  📖 Found {num_chunks} chunks")
+
+                        result_parts = []
+                        for i in range(num_chunks):
+                            tag_element = 0x1001 + i
+                            if (0x7777, tag_element) in dicom_dataset:
+                                chunk = str(dicom_dataset[0x7777, tag_element].value)
+                                result_parts.append(chunk)
+                                print(f"  📖 Read chunk {i + 1}: {len(chunk)} chars")
+
+                        if result_parts:
+                            complete_result = ''.join(result_parts)
+                            print(f"  📖 Reconstructed complete result: {len(complete_result)} chars")
+                            return complete_result
+                    except:
+                        pass
+
+                # Fallback la tag-ul simplu
+                if (0x7777, 0x1001) in dicom_dataset:
+                    private_result = str(dicom_dataset[0x7777, 0x1001].value)
+                    print(f"  📖 Found private tag result: {len(private_result)} chars")
+                    return private_result
+
+            # PRIORITATE 2: Image Comments (disponibil peste tot)
             if hasattr(dicom_dataset, 'ImageComments'):
-                return str(dicom_dataset.ImageComments)
+                image_comments = str(dicom_dataset.ImageComments)
+                print(f"  📖 Found ImageComments: {len(image_comments)} chars")
+                return image_comments
 
+            # PRIORITATE 3: Study Comments (dacă există)
+            if (0x0032, 0x4000) in dicom_dataset:
+                study_comments = str(dicom_dataset[0x0032, 0x4000].value)
+                if "EXAMINATION RESULT:" in study_comments:
+                    result = study_comments.replace("EXAMINATION RESULT: ", "")
+                    print(f"  📖 Found StudyComments result: {len(result)} chars")
+                    return result
+
+            print(f"  📖 No examination result found in instance {instance_id}")
             return ""
 
         except ImportError:
             print("Warning: pydicom not available for reading DICOM metadata")
             return ""
         except Exception as e:
-            print(f"Warning: Failed to read examination result from DICOM: {e}")
+            print(f"Warning: Failed to read examination result from DICOM {instance_id}: {e}")
             return ""
