@@ -53,7 +53,7 @@ class AdminView(QWidget):
 
         # Create tab widget for admin sections
         self.admin_tabs = QTabWidget()
-        self.admin_tabs.setObjectName("AdminTabs")
+        # self.admin_tabs.setObjectName("AdminTabs")
 
         # Users tab
         self.user_widget = UserManagementWidget(self._auth_controller)

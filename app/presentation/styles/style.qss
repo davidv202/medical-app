@@ -541,10 +541,6 @@ QTableWidget::item:selected {
     outline: none;
 }
 
-QTableWidget::item:hover {
-    background: #f0f9ff;
-}
-
 QHeaderView::section {
     background: #f1f5f9;
     color: #475569;
@@ -698,20 +694,20 @@ QTabWidget#StudiesTab QTabBar::tab:focus {
     outline-offset: 2px;
 }
 
-QTabWidget#AdminTabs {
+QTabWidget {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
 
-QTabWidget#AdminTabs::pane {
+QTabWidget::pane {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 0px 8px 8px 8px;
     padding: 12px;
 }
 
-QTabWidget#AdminTabs QTabBar::tab {
+QTabWidget QTabBar::tab {
     background: #f8fafc;
     color: #64748b;
     border: 1px solid #e2e8f0;
@@ -725,7 +721,7 @@ QTabWidget#AdminTabs QTabBar::tab {
     border-top-right-radius: 8px;
 }
 
-QTabWidget#AdminTabs QTabBar::tab:selected {
+QTabWidget QTabBar::tab:selected {
     background: #ffffff;
     color: #1e40af;
     border: 2px solid #2563eb;
@@ -734,7 +730,7 @@ QTabWidget#AdminTabs QTabBar::tab:selected {
     font-weight: 700;
 }
 
-QTabWidget#AdminTabs QTabBar::tab:hover {
+QTabWidget QTabBar::tab:hover {
     background: #f1f5f9;
     color: #475569;
 }

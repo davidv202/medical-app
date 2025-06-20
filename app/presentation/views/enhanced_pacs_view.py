@@ -58,7 +58,7 @@ class EnhancedPacsView(QWidget):
 
         # Create tab widget
         self.tab_widget = QTabWidget()
-        self.tab_widget.setObjectName("StudiesTab")
+        # self.tab_widget.setObjectName("StudiesTab")
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
 
         # Studies tab (main functionality)
