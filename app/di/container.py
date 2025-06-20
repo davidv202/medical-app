@@ -4,6 +4,7 @@ from app.config.database import DatabaseConfig
 # Infrastructure
 from app.infrastructure.http_client import HttpClient
 from app.infrastructure.pdf_generator import PdfGenerator
+from app.repositories.settings_repository import SettingsRepository
 
 # Repositories
 from app.repositories.user_repository import UserRepository
@@ -21,6 +22,7 @@ from app.services.pdf_service import PdfService
 # Controllers
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.hybrid_pacs_controller import HybridPacsController
+from app.services.settings_service import SettingsService
 
 
 class Container:
@@ -54,6 +56,11 @@ class Container:
     def get_pacs_url_repository(cls) -> PacsUrlRepository:
         db_config = cls.get_database_config()
         return cls._get_or_create('pacs_url_repository', lambda: PacsUrlRepository(db_config))
+
+    @classmethod
+    def get_settings_repository(cls) -> SettingsRepository:
+        db_config = cls.get_database_config()
+        return cls._get_or_create('settings_repository', lambda: SettingsRepository(db_config))
 
     @classmethod
     def get_auth_service(cls) -> AuthService:
@@ -98,6 +105,11 @@ class Container:
     def get_pacs_url_service(cls) -> PacsUrlService:
         pacs_url_repo = cls.get_pacs_url_repository()
         return cls._get_or_create('pacs_url_service', lambda: PacsUrlService(pacs_url_repo))
+
+    @classmethod
+    def get_settings_service(cls) -> SettingsService:
+        settings_repo = cls.get_settings_repository()
+        return cls._get_or_create('settings_service', lambda: SettingsService(settings_repo))
 
     @classmethod
     def get_auth_controller(cls) -> AuthController:

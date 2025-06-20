@@ -16,6 +16,7 @@ class PacsManagementWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._notification_service = NotificationService()
+        self._needs_restart = False
 
         # Editing state
         self._editing_pacs_id = None
@@ -166,6 +167,12 @@ class PacsManagementWidget(QWidget):
         self.create_pacs_button.setObjectName("CreateButton")
         self.create_pacs_button.clicked.connect(self._handle_create_or_update_pacs)
 
+        pacs_form_buttons_layout.addWidget(self.clear_pacs_button)
+        pacs_form_buttons_layout.addWidget(self.cancel_pacs_button)
+        pacs_form_buttons_layout.addWidget(self.create_pacs_button)
+
+        layout.addLayout(pacs_form_buttons_layout)
+
         # Global PACS Selection
         selection_group = QGroupBox("Selectare PACS Global")
         selection_layout = QFormLayout(selection_group)
@@ -181,14 +188,51 @@ class PacsManagementWidget(QWidget):
         selection_layout.addRow("PACS Sursă (pentru citire):", self.source_pacs_combo)
         selection_layout.addRow("PACS Țintă (pentru trimitere):", self.target_pacs_combo)
 
-        pacs_form_buttons_layout.addWidget(self.clear_pacs_button)
-        pacs_form_buttons_layout.addWidget(self.cancel_pacs_button)
-        pacs_form_buttons_layout.addWidget(self.create_pacs_button)
-
-        layout.addLayout(pacs_form_buttons_layout)
         layout.addWidget(selection_group)
-        layout.addStretch()
 
+        # Restart section
+        restart_group = QGroupBox("Restart Aplicație")
+        restart_layout = QVBoxLayout(restart_group)
+
+        restart_info_label = QLabel(
+            "⚠️ Dacă ai modificat configurația PACS, repornește aplicația\n"
+            "pentru ca modificările să aibă efect complet."
+        )
+        restart_info_label.setWordWrap(True)
+        restart_info_label.setStyleSheet("color: #f59e0b; font-size: 11px; padding: 8px;")
+        restart_layout.addWidget(restart_info_label)
+
+        restart_button_layout = QHBoxLayout()
+
+        self.restart_app_button = QPushButton("🔄 Restart Aplicație")
+        self.restart_app_button.setObjectName("RestartButton")
+        self.restart_app_button.setStyleSheet("""
+            QPushButton#RestartButton {
+                background: #f59e0b;
+                color: white;
+                font-weight: 600;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+            }
+            QPushButton#RestartButton:hover {
+                background: #d97706;
+            }
+            QPushButton#RestartButton:pressed {
+                background: #b45309;
+            }
+        """)
+        self.restart_app_button.clicked.connect(self._restart_application)
+
+        restart_button_layout.addStretch()
+        restart_button_layout.addWidget(self.restart_app_button)
+        restart_button_layout.addStretch()
+
+        restart_layout.addLayout(restart_button_layout)
+        layout.addWidget(restart_group)
+
+        layout.addStretch()
         return widget
 
     # Public methods
@@ -472,38 +516,83 @@ class PacsManagementWidget(QWidget):
 
     def _load_pacs_combos(self):
         try:
+            from app.di.container import Container
             pacs_service = Container.get_pacs_url_service()
+            settings_service = Container.get_settings_service()
+
             all_pacs = pacs_service.get_all_pacs_urls()
 
             # Clear combos
             self.source_pacs_combo.clear()
             self.target_pacs_combo.clear()
 
+            # Get current selections from database
+            source_pacs_id = settings_service.get_source_pacs_id()
+            target_pacs_id = settings_service.get_target_pacs_id()
+
             # Add "Auto (First)" option for source
             self.source_pacs_combo.addItem("🔄 Auto (First PACS)", -1)
+
+            # Track if we found the current selections
+            source_found = False
+            target_found = False
 
             # Add all PACS
             for pacs in all_pacs:
                 display_text = f"{pacs.name} ({pacs.url})"
-                self.source_pacs_combo.addItem(display_text, pacs.id)
-                self.target_pacs_combo.addItem(display_text, pacs.id)
 
-            # Set current selections
-            settings = Settings()
+                # Mark current selections with indicators
+                if pacs.id == source_pacs_id:
+                    source_display = f"📖 {display_text}"  # Reading icon for source
+                    source_found = True
+                else:
+                    source_display = display_text
 
-            # Set source combo
-            if settings.SELECTED_SOURCE_PACS_ID:
+                if pacs.id == target_pacs_id:
+                    target_display = f"📤 {display_text}"  # Send icon for target
+                    target_found = True
+                else:
+                    target_display = display_text
+
+                self.source_pacs_combo.addItem(source_display, pacs.id)
+                self.target_pacs_combo.addItem(target_display, pacs.id)
+
+            # Set current selections based on database values
+            if source_pacs_id is None:
+                # Auto mode
+                self.source_pacs_combo.setCurrentIndex(0)
+            elif source_found:
+                # Find and select the source PACS
                 for i in range(self.source_pacs_combo.count()):
-                    if self.source_pacs_combo.itemData(i) == settings.SELECTED_SOURCE_PACS_ID:
+                    if self.source_pacs_combo.itemData(i) == source_pacs_id:
                         self.source_pacs_combo.setCurrentIndex(i)
                         break
 
-            # Set target combo
-            if settings.SELECTED_TARGET_PACS_ID:
+            if target_pacs_id and target_found:
+                # Find and select the target PACS
                 for i in range(self.target_pacs_combo.count()):
-                    if self.target_pacs_combo.itemData(i) == settings.SELECTED_TARGET_PACS_ID:
+                    if self.target_pacs_combo.itemData(i) == target_pacs_id:
                         self.target_pacs_combo.setCurrentIndex(i)
                         break
+
+            # Show status messages
+            if source_pacs_id:
+                source_pacs = pacs_service.get_pacs_by_id(source_pacs_id)
+                if source_pacs:
+                    print(f"Source PACS loaded: {source_pacs.name} ({source_pacs.url})")
+                else:
+                    print(f"Source PACS ID {source_pacs_id} not found")
+            else:
+                print("Source PACS set to Auto mode")
+
+            if target_pacs_id:
+                target_pacs = pacs_service.get_pacs_by_id(target_pacs_id)
+                if target_pacs:
+                    print(f"Target PACS loaded: {target_pacs.name} ({target_pacs.url})")
+                else:
+                    print(f"Target PACS ID {target_pacs_id} not found")
+            else:
+                print("No target PACS set")
 
         except Exception as e:
             self._notification_service.show_error(self, "Eroare", f"Nu s-au putut încărca PACS-urile în combo: {e}")
@@ -511,17 +600,79 @@ class PacsManagementWidget(QWidget):
     def _on_source_pacs_changed(self, index):
         pacs_id = self.source_pacs_combo.itemData(index)
 
-        if pacs_id == -1:  # Auto mode
-            Settings.set_source_pacs_id(None)
-            print("Source PACS set to Auto (First)")
-        else:
-            Settings.set_source_pacs_id(pacs_id)
-            pacs_name = self.source_pacs_combo.currentText()
-            print(f"Source PACS set to: {pacs_name}")
+        try:
+            from app.di.container import Container
+            settings_service = Container.get_settings_service()
+
+            if pacs_id == -1:  # Auto mode
+                settings_service.set_source_pacs_id(None)
+                print("Source PACS set to Auto (First)")
+            else:
+                settings_service.set_source_pacs_id(pacs_id)
+                pacs_name = self.source_pacs_combo.currentText()
+                print(f"Source PACS set to: {pacs_name}")
+
+            self._needs_restart = True
+            self._update_restart_indicator()
+
+        except Exception as e:
+            print(f"Error saving source PACS setting: {e}")
 
     def _on_target_pacs_changed(self, index):
         pacs_id = self.target_pacs_combo.itemData(index)
 
-        Settings.set_target_pacs_id(pacs_id)
-        pacs_name = self.target_pacs_combo.currentText()
-        print(f"Target PACS set to: {pacs_name}")
+        try:
+            from app.di.container import Container
+            settings_service = Container.get_settings_service()
+
+            settings_service.set_target_pacs_id(pacs_id)
+            pacs_name = self.target_pacs_combo.currentText()
+            print(f"Target PACS set to: {pacs_name}")
+
+            self._needs_restart = True
+            self._update_restart_indicator()
+
+        except Exception as e:
+            print(f"Error saving target PACS setting: {e}")
+
+    def _restart_application(self):
+        try:
+            import sys
+            import os
+            from PyQt6.QtWidgets import QApplication
+
+            # Show final confirmation
+            final_reply = self._notification_service.ask_confirmation(
+                self,
+                "Confirmare restart",
+                "Aplicația se va închide și va reporni.\n\n"
+                "Asigură-te că ai salvat toate datele importante.\n\n"
+                "Continui?"
+            )
+
+            if final_reply:
+                print("🔄 Restarting application...")
+
+                # Get the current executable path
+                python = sys.executable
+                script = sys.argv[0]
+
+                # Close current application
+                QApplication.quit()
+
+                # Start new instance
+                os.execl(python, python, script)
+
+        except Exception as e:
+            self._notification_service.show_error(
+                self,
+                "Eroare restart",
+                f"Nu am putut reporni aplicația automat: {e}\n\n"
+                "Te rog să închizi și să repornești manual aplicația."
+            )
+
+    def _update_restart_indicator(self):
+        if self._needs_restart:
+            self.restart_app_button.setText("🔄 Restart Aplicație (NECESAR)")
+        else:
+            self.restart_app_button.setText("🔄 Restart Aplicație")

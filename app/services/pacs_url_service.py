@@ -15,7 +15,7 @@ class PacsUrlService:
 
     def get_pacs_config_by_id(self, pacs_id: int) -> Optional[Tuple[str, Tuple[str, str]]]:
         pacs = self.get_pacs_by_id(pacs_id)
-        if pacs and pacs.is_active:
+        if pacs:
             return pacs.url, (pacs.username, pacs.password)
         return None
 
