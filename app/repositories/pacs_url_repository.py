@@ -61,38 +61,3 @@ class PacsUrlRepository(BaseRepository[PacsUrl]):
             return session.query(PacsUrl).all()
         finally:
             session.close()
-
-    def find_all_active(self) -> List[PacsUrl]:
-        session = self._get_session()
-        try:
-            return session.query(PacsUrl).filter_by(is_active=True).all()
-        finally:
-            session.close()
-
-    def find_primary(self) -> Optional[PacsUrl]:
-        session = self._get_session()
-        try:
-            return session.query(PacsUrl).filter_by(is_primary=True, is_active=True).first()
-        finally:
-            session.close()
-
-    def set_primary(self, pacs_id: int) -> bool:
-        session = self._get_session()
-        try:
-            # First, unset all primary flags
-            session.query(PacsUrl).update({PacsUrl.is_primary: False})
-
-            # Then set the new primary
-            pacs_url = session.query(PacsUrl).filter_by(id=pacs_id).first()
-            if not pacs_url:
-                return False
-
-            pacs_url.is_primary = True
-            pacs_url.is_active = True  # Ensure primary is also active
-            session.commit()
-            return True
-        except SQLAlchemyError as e:
-            session.rollback()
-            raise e
-        finally:
-            session.close()

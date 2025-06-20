@@ -77,8 +77,8 @@ class PacsManagementWidget(QWidget):
 
         # PACS table
         self.pacs_table = QTableWidget()
-        self.pacs_table.setColumnCount(6)
-        self.pacs_table.setHorizontalHeaderLabels(["ID", "Name", "URL", "Username", "Active", "Primary"])
+        self.pacs_table.setColumnCount(4)
+        self.pacs_table.setHorizontalHeaderLabels(["ID", "Name", "URL", "Username"])
         self.pacs_table.verticalHeader().setVisible(False)
         self.pacs_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.pacs_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -100,15 +100,6 @@ class PacsManagementWidget(QWidget):
         self.edit_pacs_button.clicked.connect(self._edit_selected_pacs)
         self.edit_pacs_button.setEnabled(False)
 
-        self.set_primary_button = QPushButton("Set Primary")
-        self.set_primary_button.setObjectName("PrimaryButton")
-        self.set_primary_button.clicked.connect(self._set_primary_pacs)
-        self.set_primary_button.setEnabled(False)
-
-        self.toggle_active_button = QPushButton("Toggle Active")
-        self.toggle_active_button.clicked.connect(self._toggle_pacs_active)
-        self.toggle_active_button.setEnabled(False)
-
         self.test_connection_button = QPushButton("Test Connection")
         self.test_connection_button.setObjectName("TestButton")
         self.test_connection_button.clicked.connect(self._test_pacs_connection)
@@ -120,8 +111,6 @@ class PacsManagementWidget(QWidget):
 
         pacs_actions_layout.addWidget(self.refresh_pacs_button)
         pacs_actions_layout.addWidget(self.edit_pacs_button)
-        pacs_actions_layout.addWidget(self.set_primary_button)
-        pacs_actions_layout.addWidget(self.toggle_active_button)
         pacs_actions_layout.addWidget(self.test_connection_button)
         pacs_actions_layout.addWidget(self.delete_pacs_button)
         pacs_actions_layout.addStretch()
@@ -155,17 +144,10 @@ class PacsManagementWidget(QWidget):
         self.pacs_password_input.setObjectName("PasswordInput")
         self.pacs_password_input.setPlaceholderText("parola PACS")
 
-        self.pacs_is_active_checkbox = QCheckBox("PACS Activ")
-        self.pacs_is_active_checkbox.setChecked(True)
-
-        self.pacs_is_primary_checkbox = QCheckBox("PACS Principal (pentru citire)")
-
         form_layout.addRow("Nume:", self.pacs_name_input)
         form_layout.addRow("URL:", self.pacs_url_input)
         form_layout.addRow("Username:", self.pacs_username_input)
         form_layout.addRow("Parola:", self.pacs_password_input)
-        form_layout.addRow("", self.pacs_is_active_checkbox)
-        form_layout.addRow("", self.pacs_is_primary_checkbox)
 
         layout.addWidget(self.pacs_form_group)
 
@@ -239,26 +221,14 @@ class PacsManagementWidget(QWidget):
                 self.pacs_table.setItem(row, 2, QTableWidgetItem(pacs.url))
                 self.pacs_table.setItem(row, 3, QTableWidgetItem(pacs.username))
 
-                # Status indicators with colors
-                active_item = QTableWidgetItem("✓" if pacs.is_active else "✗")
-                active_item.setForeground(Qt.GlobalColor.green if pacs.is_active else Qt.GlobalColor.red)
-                self.pacs_table.setItem(row, 4, active_item)
-
-                primary_item = QTableWidgetItem("✓" if pacs.is_primary else "✗")
-                primary_item.setForeground(Qt.GlobalColor.blue if pacs.is_primary else Qt.GlobalColor.gray)
-                self.pacs_table.setItem(row, 5, primary_item)
-
             # Adjust column widths
             header = self.pacs_table.horizontalHeader()
             header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID
             header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # Name
             header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # URL
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Username
-            header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Active
-            header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Primary
 
             self._clear_pacs_search()
-
             self._load_pacs_combos()
 
         except Exception as e:
@@ -315,8 +285,6 @@ class PacsManagementWidget(QWidget):
         has_selection = current_row >= 0
 
         self.edit_pacs_button.setEnabled(has_selection)
-        self.set_primary_button.setEnabled(has_selection)
-        self.toggle_active_button.setEnabled(has_selection)
         self.test_connection_button.setEnabled(has_selection)
         self.delete_pacs_button.setEnabled(has_selection)
 
@@ -345,8 +313,6 @@ class PacsManagementWidget(QWidget):
             self.pacs_url_input.setText(pacs.url)
             self.pacs_username_input.setText(pacs.username)
             self.pacs_password_input.setText(pacs.password)
-            self.pacs_is_active_checkbox.setChecked(pacs.is_active)
-            self.pacs_is_primary_checkbox.setChecked(pacs.is_primary)
 
             # Switch to edit mode
             self._editing_pacs_mode = True
@@ -385,8 +351,6 @@ class PacsManagementWidget(QWidget):
         url = self.pacs_url_input.text().strip()
         username = self.pacs_username_input.text().strip()
         password = self.pacs_password_input.text().strip()
-        is_active = self.pacs_is_active_checkbox.isChecked()
-        is_primary = self.pacs_is_primary_checkbox.isChecked()
 
         try:
             pacs_service = Container.get_pacs_url_service()
@@ -398,7 +362,7 @@ class PacsManagementWidget(QWidget):
                 return
 
             # Create PACS
-            pacs_service.create_pacs_url(name, url, username, password, is_active, is_primary)
+            pacs_service.create_pacs_url(name, url, username, password)
 
             self._notification_service.show_info(self, "Succes", f"PACS '{name}' a fost creat cu succes.")
             self._clear_pacs_form()
@@ -414,8 +378,6 @@ class PacsManagementWidget(QWidget):
         url = self.pacs_url_input.text().strip()
         username = self.pacs_username_input.text().strip()
         password = self.pacs_password_input.text().strip()
-        is_active = self.pacs_is_active_checkbox.isChecked()
-        is_primary = self.pacs_is_primary_checkbox.isChecked()
 
         try:
             pacs_service = Container.get_pacs_url_service()
@@ -428,7 +390,7 @@ class PacsManagementWidget(QWidget):
 
             # Update PACS
             success = pacs_service.update_pacs_url(
-                self._editing_pacs_id, name, url, username, password, is_active, is_primary
+                self._editing_pacs_id, name, url, username, password
             )
 
             if success:
@@ -441,48 +403,6 @@ class PacsManagementWidget(QWidget):
 
         except Exception as e:
             self._notification_service.show_error(self, "Eroare", f"Nu s-a putut actualiza PACS-ul: {e}")
-
-    def _set_primary_pacs(self):
-        """Set selected PACS as primary"""
-        current_row = self.pacs_table.currentRow()
-        if current_row >= 0:
-            pacs_id = int(self.pacs_table.item(current_row, 0).text())
-            pacs_name = self.pacs_table.item(current_row, 1).text()
-
-            try:
-                pacs_service = Container.get_pacs_url_service()
-
-                if pacs_service.set_primary_pacs(pacs_id):
-                    self._notification_service.show_info(self, "Succes",
-                                                         f"PACS '{pacs_name}' a fost setat ca principal.")
-                    self._load_pacs_urls()
-                    self.pacs_updated.emit()
-                else:
-                    self._notification_service.show_error(self, "Eroare", "Nu s-a putut seta PACS-ul ca principal.")
-
-            except Exception as e:
-                self._notification_service.show_error(self, "Eroare", f"Nu s-a putut seta PACS-ul ca principal: {e}")
-
-    def _toggle_pacs_active(self):
-        """Toggle active status of selected PACS"""
-        current_row = self.pacs_table.currentRow()
-        if current_row >= 0:
-            pacs_id = int(self.pacs_table.item(current_row, 0).text())
-            pacs_name = self.pacs_table.item(current_row, 1).text()
-
-            try:
-                pacs_service = Container.get_pacs_url_service()
-
-                if pacs_service.toggle_active_status(pacs_id):
-                    self._notification_service.show_info(self, "Succes",
-                                                         f"Status-ul PACS '{pacs_name}' a fost schimbat.")
-                    self._load_pacs_urls()
-                    self.pacs_updated.emit()
-                else:
-                    self._notification_service.show_error(self, "Eroare", "Nu s-a putut schimba status-ul PACS-ului.")
-
-            except Exception as e:
-                self._notification_service.show_error(self, "Eroare", f"Nu s-a putut schimba status-ul: {e}")
 
     def _test_pacs_connection(self):
         """Test connection to selected PACS"""
@@ -546,8 +466,6 @@ class PacsManagementWidget(QWidget):
         self.pacs_url_input.clear()
         self.pacs_username_input.clear()
         self.pacs_password_input.clear()
-        self.pacs_is_active_checkbox.setChecked(True)
-        self.pacs_is_primary_checkbox.setChecked(False)
 
         if not self._editing_pacs_mode:
             self.pacs_name_input.setFocus()
@@ -555,21 +473,18 @@ class PacsManagementWidget(QWidget):
     def _load_pacs_combos(self):
         try:
             pacs_service = Container.get_pacs_url_service()
-            active_pacs = pacs_service.get_active_pacs_urls()
+            all_pacs = pacs_service.get_all_pacs_urls()
 
             # Clear combos
             self.source_pacs_combo.clear()
             self.target_pacs_combo.clear()
 
-            # Add "Auto (Primary)" option for source
-            self.source_pacs_combo.addItem("🔄 Auto (Primary PACS)", -1)
+            # Add "Auto (First)" option for source
+            self.source_pacs_combo.addItem("🔄 Auto (First PACS)", -1)
 
-            # Add all active PACS
-            for pacs in active_pacs:
+            # Add all PACS
+            for pacs in all_pacs:
                 display_text = f"{pacs.name} ({pacs.url})"
-                if pacs.is_primary:
-                    display_text = f"⭐ {display_text}"
-
                 self.source_pacs_combo.addItem(display_text, pacs.id)
                 self.target_pacs_combo.addItem(display_text, pacs.id)
 
@@ -598,7 +513,7 @@ class PacsManagementWidget(QWidget):
 
         if pacs_id == -1:  # Auto mode
             Settings.set_source_pacs_id(None)
-            print("Source PACS set to Auto (Primary)")
+            print("Source PACS set to Auto (First)")
         else:
             Settings.set_source_pacs_id(pacs_id)
             pacs_name = self.source_pacs_combo.currentText()
