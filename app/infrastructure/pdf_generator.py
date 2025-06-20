@@ -11,8 +11,11 @@ class PdfGenerator:
         generated_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         current_year = datetime.now().strftime("%Y")
 
+        # Filtrează și organizează metadatele pentru pacient
+        patient_metadata = self._filter_patient_metadata(metadata)
+
         html_content = self._build_html_content(
-            content, metadata, generated_date, doctor_name, current_year
+            content, patient_metadata, generated_date, doctor_name, current_year
         )
 
         stylesheets = []
@@ -21,8 +24,47 @@ class PdfGenerator:
 
         HTML(string=html_content).write_pdf(output_path, stylesheets=stylesheets)
 
-    def _build_html_content(self, content: str, metadata: Dict[str, Any], generated_date: str,
+    def _filter_patient_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+
+        patient_fields = {
+            # Informații despre pacient
+            "Patient Name": "Nume pacient",
+            "Patient Birth Date": "Data nașterii",
+            "Patient Sex": "Sex",
+            "Patient Age": "Vârsta",
+
+            # Informații despre examinare
+            "Study Date": "Data examinării",
+            "Description": "Tip examinare",
+            "Body Part Examined": "Zona examinată",
+            "Referring Physician": "Medic trimițător",
+
+            # Informații despre instituție
+            "Institution Name": "Instituția medicală"
+        }
+
+        filtered_metadata = {}
+
+        for original_key, friendly_name in patient_fields.items():
+            value = metadata.get(original_key)
+            if value and value != 'N/A' and value.strip():
+                if original_key == "Study Time" and len(value) >= 6:
+                    try:
+                        formatted_time = f"{value[:2]}:{value[2:4]}:{value[4:6]}"
+                        filtered_metadata[friendly_name] = formatted_time
+                    except:
+                        filtered_metadata[friendly_name] = value
+                elif original_key == "Patient Sex":
+                    sex_mapping = {"M": "Masculin", "F": "Feminin", "O": "Altul"}
+                    filtered_metadata[friendly_name] = sex_mapping.get(value.upper(), value)
+                else:
+                    filtered_metadata[friendly_name] = value
+
+        return filtered_metadata
+
+    def _build_html_content(self, content: str, patient_metadata: Dict[str, Any], generated_date: str,
                             doctor_name: str = None, current_year: str = None) -> str:
+
         doctor_signature = ""
         if doctor_name:
             doctor_signature = f"""
@@ -35,35 +77,38 @@ class PdfGenerator:
             </div>
             """
 
+        metadata_rows = ""
+        for key, value in patient_metadata.items():
+            metadata_rows += f'<tr><td class="label">{key}</td><td>{value}</td></tr>'
+
         return f"""
         <!DOCTYPE html>
         <html lang="ro">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Rezultat Explorare Radiologică</title>
+            <title>Rezultat Investigație Medicală</title>
         </head>
         <body data-generation-date="{generated_date}" data-current-year="{current_year}">
             <div class="main-content">
-                <h1>Rezultat Explorare Radiologică</h1>
+                <h1>Rezultat Investigație Medicală</h1>
                 <p class="generation-date">
-                    <strong>Data generării:</strong> {generated_date}
+                    <strong>Document generat:</strong> {generated_date}
                 </p>
 
                 <div class="section">
-                    <h2>Date Pacient și Studiu</h2>
+                    <h2>Informații despre Pacient și Investigație</h2>
                     <table class="meta-table">
-                        {''.join(f'<tr><td class="label">{key}</td><td>{value or "N/A"}</td></tr>' for key, value in metadata.items())}
+                        {metadata_rows}
                     </table>
                 </div>
 
                 <div class="section">
-                    <h2>Rezultatul Explorării</h2>
+                    <h2>Rezultatul Investigației</h2>
                     <div class="text-block">
                         {self._format_content_for_html(content)}
                     </div>
                 </div>
-
                 {doctor_signature}
             </div>
 
@@ -73,12 +118,10 @@ class PdfGenerator:
 
     def _format_content_for_html(self, content: str) -> str:
         if not content.strip():
-            return "<em style='color: #94a3b8; font-size: 11px; font-style: italic;'>Nu a fost introdus niciun rezultat al explorării.</em>"
+            return "<em style='color: #94a3b8; font-size: 11px; font-style: italic;'>Nu a fost introdus niciun rezultat al investigației.</em>"
 
-        # Escape HTML characters
         content = content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
-        # Convertește line breaks în paragraphs
         paragraphs = content.split('\n\n')
         formatted_paragraphs = []
 

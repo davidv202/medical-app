@@ -166,7 +166,7 @@ class PacsService(IPacsService):
                     # Add examination result if provided
                     if examination_result:
                         print(f"  📝 Adding examination result: {len(examination_result)} chars")
-                        modified_dicom_data = self._add_examination_result_to_dicom(
+                        modified_dicom_data = self.add_examination_result_to_dicom(
                             dicom_data, examination_result
                         )
                         print(f"  📝 Modified DICOM data: {len(modified_dicom_data)} bytes")
@@ -232,7 +232,7 @@ class PacsService(IPacsService):
             print(f"❌ Error deleting existing study: {e}")
             return False
 
-    def _add_examination_result_to_dicom(self, dicom_data: bytes, examination_result: str) -> bytes:
+    def add_examination_result_to_dicom(self, dicom_data: bytes, examination_result: str) -> bytes:
         try:
             dicom_dataset = pydicom.dcmread(BytesIO(dicom_data))
 

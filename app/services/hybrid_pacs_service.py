@@ -51,11 +51,9 @@ class HybridPacsService(IPacsService):
         if self._is_local_study(study_id):
             print(f"🔄 HybridPacsService: Sending local study {study_id} with examination result")
 
-            # IMPORTANT: Definește callback-ul pentru modificarea DICOM-ului
             def dicom_modifier_callback(dicom_data: bytes, examination_result: str) -> bytes:
-                """Callback pentru adăugarea rezultatului explorării în DICOM"""
                 print(f"📝 Applying DICOM modifications via PacsService callback...")
-                return self._pacs_service._add_examination_result_to_dicom(dicom_data, examination_result)
+                return self._pacs_service.add_examination_result_to_dicom(dicom_data, examination_result)
 
             # Trimite la LocalFileService CU callback-ul
             return self._local_file_service.send_local_study_to_pacs(
@@ -63,7 +61,7 @@ class HybridPacsService(IPacsService):
                 target_url=target_url,
                 target_auth=target_auth,
                 examination_result=examination_result,
-                dicom_modifier_callback=dicom_modifier_callback  # ← ACESTA LIPSEA!
+                dicom_modifier_callback=dicom_modifier_callback
             )
         else:
             print(f"🔄 HybridPacsService: Sending PACS study {study_id}")
