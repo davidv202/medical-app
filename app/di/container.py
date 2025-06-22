@@ -12,6 +12,7 @@ from app.repositories.pacs_url_repository import PacsUrlRepository
 
 # Services
 from app.services.auth_service import AuthService
+from app.services.dicom_anonymizer_service import DicomAnonymizer
 from app.services.pacs_url_service import PacsUrlService
 from app.services.session_service import SessionService
 from app.services.pacs_service import PacsService
@@ -110,6 +111,10 @@ class Container:
     def get_settings_service(cls) -> SettingsService:
         settings_repo = cls.get_settings_repository()
         return cls._get_or_create('settings_service', lambda: SettingsService(settings_repo))
+
+    @classmethod
+    def get_dicom_anonymizer_service(cls):
+        return cls._get_or_create('dicom_anonymizer', DicomAnonymizer)
 
     @classmethod
     def get_auth_controller(cls) -> AuthController:

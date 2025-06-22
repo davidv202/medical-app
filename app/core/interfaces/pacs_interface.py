@@ -26,3 +26,6 @@ class IPacsService(ABC):
     @abstractmethod
     def get_examination_result_from_dicom(self, instance_id: str) -> str:
         pass
+
+    def clear_local_studies(self):
+        pass

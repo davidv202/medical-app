@@ -18,6 +18,9 @@ class PacsService(IPacsService):
             from app.config.settings import Settings
             self._pacs_url, self._pacs_auth = Settings.get_pacs_config()
 
+        from app.di.container import Container
+        self._anonymizer = Container.get_dicom_anonymizer_service()
+
     def get_all_studies(self) -> List[str]:
         try:
             response = self._http_client.get(f"{self._pacs_url}/studies", auth=self._pacs_auth)
@@ -76,7 +79,7 @@ class PacsService(IPacsService):
             raise PacsDataError(f"Nu am putut accesa fisierul DICOM pentru instanta {instance_id}: {e}")
 
     def send_study_to_pacs(self, study_id: str, target_url: str, target_auth: tuple,
-                           examination_result: str = None) -> bool:
+                           examination_result: str = None, anonymize: bool = False) -> bool:
 
         try:
             instances = self.get_study_instances(study_id)
@@ -97,10 +100,10 @@ class PacsService(IPacsService):
                     return False
 
                 print(f"🔄 Recreating study with new examination result...")
-                return self._create_new_study(study_id, target_url, target_auth, examination_result)
+                return self._create_new_study(study_id, target_url, target_auth, examination_result, anonymize)
             else:
                 print(f"✨ Study does not exist in target PACS - CREATING new")
-                return self._create_new_study(study_id, target_url, target_auth, examination_result)
+                return self._create_new_study(study_id, target_url, target_auth, examination_result, anonymize)
 
         except Exception as e:
             raise PacsConnectionError(f"Nu am putut procesa studiul în PACS: {e}")
@@ -142,7 +145,7 @@ class PacsService(IPacsService):
             print(f"Error searching for existing study: {e}")
             return None
 
-    def _create_new_study(self, study_id: str, target_url: str, target_auth: tuple, examination_result: str) -> bool:
+    def _create_new_study(self, study_id: str, target_url: str, target_auth: tuple, examination_result: str, anonymize: bool = False) -> bool:
 
         try:
             instances = self.get_study_instances(study_id)
@@ -162,6 +165,11 @@ class PacsService(IPacsService):
                     # Get original DICOM
                     dicom_data = self.get_dicom_file(instance_id)
                     print(f"  📥 Retrieved DICOM data: {len(dicom_data)} bytes")
+
+                    if anonymize:
+                        print(f"  🔒 Anonymizing PACS DICOM data...")
+                        dicom_data = self._anonymizer.anonymize_dicom(dicom_data)
+                        print(f"  🔒 DICOM anonymized: {len(dicom_data)} bytes")
 
                     # Add examination result if provided
                     if examination_result:
