@@ -1,4 +1,3 @@
-import re
 from typing import Optional
 
 
@@ -17,8 +16,6 @@ class Validators:
     def validate_password(password: str) -> Optional[str]:
         if not password:
             return "Password is required"
-        if len(password) < 3:
-            return "Password must be at least 6 characters long"
         return None
 
     @staticmethod
@@ -26,6 +23,4 @@ class Validators:
         if name and len(name.strip()) > 0:
             if len(name.strip()) > 100:
                 return f"{field_name} trebuie să aibă mai puțin de 100 de caractere"
-            if not re.match(r'^[a-zA-ZăâîșțĂÂÎȘȚ\s-]+$', name.strip()):
-                return f"{field_name} poate conține doar litere, spații și liniuțe"
         return None

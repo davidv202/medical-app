@@ -280,7 +280,7 @@ class EnhancedPacsView(QWidget):
     def _on_studies_loaded(self, study_ids):
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
-        self.refresh_button.setText("🔄 Refresh")
+        self.refresh_button.setText("Refresh")
 
         pacs_count = 0
         local_count = 0
@@ -305,7 +305,7 @@ class EnhancedPacsView(QWidget):
     def _on_studies_error(self, error_message):
         self.study_list.set_loading(False)
         self.refresh_button.setEnabled(True)
-        self.refresh_button.setText("🔄 Refresh")
+        self.refresh_button.setText("Refresh")
         self._notification_service.show_error(self, "Error", f"Error loading studies:\n{error_message}")
 
     def _on_study_selected(self, study_id: str):
@@ -472,14 +472,15 @@ class EnhancedPacsView(QWidget):
         self.send_queue_button.setEnabled(False)
         self.send_queue_button.setText("⏳ Trimitere...")
 
-        target_url, _ = self._settings.get_target_pacs_config()
+        # Nu mai e nevoie să preiau target_url separat
+        # target_url, _ = self._settings.get_target_pacs_config()
 
         # Create worker thread
         self.sender_thread = QThread()
         self.sender_worker = QueueSenderWorker(
             self._pacs_controller,
-            queued_studies,
-            target_url
+            queued_studies
+            # Nu mai trimit target_url separat
         )
         self.sender_worker.moveToThread(self.sender_thread)
 

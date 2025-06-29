@@ -19,67 +19,77 @@ class LoginView(QWidget):
         load_style(self)
 
     def _setup_ui(self):
-        # Main layout
-        main_layout = QVBoxLayout()
-        main_layout.addStretch()
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # Center container
-        center_widget = QWidget()
-        center_widget.setMaximumWidth(400)
-        center_layout = QVBoxLayout(center_widget)
+        # Card-ul principal de login
+        card = QWidget()
+        card.setObjectName("LoginCard")
+        card.setFixedSize(420, 480)
 
-        # Title
-        title_label = QLabel("Medical PACS System")
-        title_label.setObjectName("LoginTitle")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        center_layout.addWidget(title_label)
+        # Layout pentru conținutul card-ului
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(40, 25, 40, 25)
+        card_layout.setSpacing(18)
+
+        # Icon medical
+        icon = QLabel("🏥")
+        icon.setObjectName("LoginIcon")
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card_layout.addWidget(icon)
+
+        # Title aplicație
+        title = QLabel("MediCore")
+        title.setObjectName("LoginTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card_layout.addWidget(title)
 
         # Subtitle
-        subtitle_label = QLabel("Conecteaza-te pentru a continua")
-        subtitle_label.setObjectName("LoginSubtitle")
-        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        center_layout.addWidget(subtitle_label)
+        subtitle = QLabel("Sistem de Imagistică Medicală")
+        subtitle.setObjectName("LoginSubtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card_layout.addWidget(subtitle)
 
-        center_layout.addSpacing(30)
+        card_layout.addSpacing(12)
 
-        # Form
-        form_layout = QFormLayout()
-
+        # Username input
         self.username_input = QLineEdit()
-        self.username_input.setObjectName("UsernameInput")
-        self.username_input.setPlaceholderText("Introdu username")
+        self.username_input.setObjectName("CredentialInput")
+        self.username_input.setPlaceholderText("Introdu username-ul")
+        card_layout.addWidget(self.username_input)
 
+        # Password input
         self.password_input = QLineEdit()
+        self.password_input.setObjectName("CredentialInput")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_input.setObjectName("PasswordInput")
         self.password_input.setPlaceholderText("Introdu parola")
+        card_layout.addWidget(self.password_input)
 
+        card_layout.addSpacing(8)
+
+        # Login button
+        self.login_button = QPushButton("Conectează-te")
+        self.login_button.setObjectName("LoginButton")
+        self.login_button.clicked.connect(self._handle_login)
+        card_layout.addWidget(self.login_button)
+
+        main_layout.addStretch(2)
+
+        h_layout = QHBoxLayout()
+        h_layout.addStretch(1)
+        h_layout.addWidget(card)
+        h_layout.addStretch(1)
+
+        main_layout.addLayout(h_layout)
+
+        main_layout.addStretch(3)
+
+        # Event handlers pentru Enter
         self.username_input.returnPressed.connect(self._handle_login)
         self.password_input.returnPressed.connect(self._handle_login)
 
-        form_layout.addRow("Username:", self.username_input)
-        form_layout.addRow("Password:", self.password_input)
-
-        center_layout.addLayout(form_layout)
-        center_layout.addSpacing(20)
-
-        # Login button
-        self.login_button = QPushButton("Login")
-        self.login_button.setObjectName("LoginButton")
-        self.login_button.clicked.connect(self._handle_login)
-        center_layout.addWidget(self.login_button)
-
-        # Center the form
-        container_layout = QHBoxLayout()
-        container_layout.addStretch()
-        container_layout.addWidget(center_widget)
-        container_layout.addStretch()
-
-        main_layout.addLayout(container_layout)
-        main_layout.addStretch()
-
-        self.setLayout(main_layout)
-
+        # Focus pe username
         self.username_input.setFocus()
 
     def _handle_login(self):

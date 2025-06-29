@@ -27,19 +27,19 @@ class PdfGenerator:
     def _filter_patient_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
 
         patient_fields = {
-            # Informații despre pacient
+            # Patient information
             "Patient Name": "Nume pacient",
             "Patient Birth Date": "Data nașterii",
             "Patient Sex": "Sex",
             "Patient Age": "Vârsta",
 
-            # Informații despre examinare
+            # Examination information
             "Study Date": "Data examinării",
             "Description": "Tip examinare",
             "Body Part Examined": "Zona examinată",
             "Referring Physician": "Medic trimițător",
 
-            # Informații despre instituție
+            # Institution information
             "Institution Name": "Instituția medicală"
         }
 

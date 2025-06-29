@@ -58,12 +58,12 @@ class AdminView(QWidget):
         # Users tab
         self.user_widget = UserManagementWidget(self._auth_controller)
         self.user_widget.user_updated.connect(self._on_user_updated)
-        self.admin_tabs.addTab(self.user_widget, "👥 Users")
+        self.admin_tabs.addTab(self.user_widget, "Users")
 
         # PACS URLs tab
         self.pacs_widget = PacsManagementWidget()
         self.pacs_widget.pacs_updated.connect(self._on_pacs_updated)
-        self.admin_tabs.addTab(self.pacs_widget, "🏥 PACS URLs")
+        self.admin_tabs.addTab(self.pacs_widget, "PACS URLs")
 
         main_layout.addWidget(self.admin_tabs)
 
@@ -76,12 +76,11 @@ class AdminView(QWidget):
         main_layout.addWidget(shortcuts_info)
 
     def _setup_shortcuts(self):
-        """Setup keyboard shortcuts that work across all tabs"""
-        # Ctrl+F to focus search (works for both tabs)
+        # Ctrl+F to focus search
         search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
         search_shortcut.activated.connect(self._focus_current_search)
 
-        # Escape to clear search (when focused)
+        # Escape to clear search
         clear_search_shortcut = QShortcut(QKeySequence("Escape"), self)
         clear_search_shortcut.activated.connect(self._clear_current_search_if_focused)
 
@@ -94,7 +93,6 @@ class AdminView(QWidget):
         edit_shortcut.activated.connect(self._edit_selected_current_tab)
 
     def _focus_current_search(self):
-        """Focus search input for current tab"""
         current_index = self.admin_tabs.currentIndex()
         if current_index == 0:  # Users tab
             self.user_widget.focus_search()
@@ -102,7 +100,6 @@ class AdminView(QWidget):
             self.pacs_widget.focus_search()
 
     def _clear_current_search_if_focused(self):
-        """Clear search if focused for current tab"""
         current_index = self.admin_tabs.currentIndex()
         if current_index == 0:  # Users tab
             self.user_widget.clear_search_if_focused()
@@ -110,7 +107,6 @@ class AdminView(QWidget):
             self.pacs_widget.clear_search_if_focused()
 
     def _refresh_current_tab(self):
-        """Refresh current tab"""
         current_index = self.admin_tabs.currentIndex()
         if current_index == 0:  # Users tab
             self.user_widget.refresh_data()
@@ -118,7 +114,6 @@ class AdminView(QWidget):
             self.pacs_widget.refresh_data()
 
     def _edit_selected_current_tab(self):
-        """Edit selected item in current tab"""
         current_index = self.admin_tabs.currentIndex()
         if current_index == 0:  # Users tab
             self.user_widget.edit_selected()
@@ -126,22 +121,16 @@ class AdminView(QWidget):
             self.pacs_widget.edit_selected()
 
     def _on_user_updated(self):
-        """Handle user data updates"""
-        # You can add any additional logic here if needed
         print("User data updated")
 
     def _on_pacs_updated(self):
-        """Handle PACS data updates"""
-        # You can add any additional logic here if needed
         print("PACS data updated")
 
     def _handle_logout(self):
-        """Handle logout action"""
         if self._auth_controller.logout(self):
             self._open_login_window()
 
     def _open_login_window(self):
-        """Open login window after logout"""
         from app.presentation.views.login_view import LoginView
         from app.di.container import Container
 

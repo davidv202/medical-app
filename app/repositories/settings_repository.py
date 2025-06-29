@@ -61,7 +61,6 @@ class SettingsRepository(BaseRepository[AppSettings]):
             session.close()
 
     def find_by_key(self, setting_key: str) -> Optional[AppSettings]:
-        """Find setting by key"""
         session = self._get_session()
         try:
             return session.query(AppSettings).filter_by(setting_key=setting_key).first()
@@ -69,12 +68,10 @@ class SettingsRepository(BaseRepository[AppSettings]):
             session.close()
 
     def get_value(self, setting_key: str, default_value: str = None) -> Optional[str]:
-        """Get setting value by key"""
         setting = self.find_by_key(setting_key)
         return setting.setting_value if setting else default_value
 
     def set_value(self, setting_key: str, setting_value: str, description: str = None) -> bool:
-        """Set or update setting value"""
         session = self._get_session()
         try:
             setting = session.query(AppSettings).filter_by(setting_key=setting_key).first()
@@ -100,3 +97,4 @@ class SettingsRepository(BaseRepository[AppSettings]):
             raise e
         finally:
             session.close()
+            

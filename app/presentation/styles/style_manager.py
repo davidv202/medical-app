@@ -1,18 +1,15 @@
-import os
 from typing import Optional
 from PyQt6.QtWidgets import QWidget
 from app.config.settings import Settings
 
 
 class StyleManager:
-    """Manages application styling"""
 
     def __init__(self):
         self.settings = Settings()
         self._cached_style: Optional[str] = None
 
     def load_style(self, widget: QWidget, style_path: Optional[str] = None) -> bool:
-        """Load and apply stylesheet to widget"""
         try:
             path = style_path or self.settings.STYLE_PATH
 
@@ -31,7 +28,6 @@ class StyleManager:
             return False
 
     def get_style_content(self, style_path: Optional[str] = None) -> str:
-        """Get stylesheet content as string"""
         try:
             path = style_path or self.settings.STYLE_PATH
             with open(path, "r", encoding="utf-8") as f:
@@ -41,7 +37,6 @@ class StyleManager:
             return ""
 
     def reload_style(self):
-        """Clear cached style to force reload"""
         self._cached_style = None
 
 
@@ -50,5 +45,4 @@ style_manager = StyleManager()
 
 
 def load_style(widget: QWidget, style_path: Optional[str] = None):
-    """Convenience function for loading styles"""
     style_manager.load_style(widget, style_path)

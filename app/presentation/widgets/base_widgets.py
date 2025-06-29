@@ -18,7 +18,6 @@ class BaseWidget(QWidget):
 
 
 class ConfirmationDialog(BaseWidget):
-    """Reusable confirmation dialog"""
     confirmed = pyqtSignal()
     cancelled = pyqtSignal()
 

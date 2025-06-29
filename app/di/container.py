@@ -19,11 +19,11 @@ from app.services.pacs_service import PacsService
 from app.services.local_file_service import LocalFileService
 from app.services.hybrid_pacs_service import HybridPacsService
 from app.services.pdf_service import PdfService
+from app.services.settings_service import SettingsService
 
 # Controllers
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.hybrid_pacs_controller import HybridPacsController
-from app.services.settings_service import SettingsService
 
 
 class Container:
@@ -35,10 +35,12 @@ class Container:
             cls._instances[key] = factory()
         return cls._instances[key]
 
+    # Config
     @classmethod
     def get_database_config(cls) -> DatabaseConfig:
         return cls._get_or_create('database_config', DatabaseConfig)
 
+    # Infrastructure
     @classmethod
     def get_http_client(cls) -> HttpClient:
         return cls._get_or_create('http_client', lambda: HttpClient(timeout=30))
@@ -48,6 +50,7 @@ class Container:
         settings = Settings()
         return cls._get_or_create('pdf_generator', lambda: PdfGenerator(settings.PDF_CSS_PATH))
 
+    # Repositories
     @classmethod
     def get_user_repository(cls) -> UserRepository:
         db_config = cls.get_database_config()
@@ -63,6 +66,7 @@ class Container:
         db_config = cls.get_database_config()
         return cls._get_or_create('settings_repository', lambda: SettingsRepository(db_config))
 
+    # Services
     @classmethod
     def get_auth_service(cls) -> AuthService:
         user_repo = cls.get_user_repository()
@@ -116,6 +120,7 @@ class Container:
     def get_dicom_anonymizer_service(cls):
         return cls._get_or_create('dicom_anonymizer', DicomAnonymizer)
 
+    # Controllers
     @classmethod
     def get_auth_controller(cls) -> AuthController:
         auth_service = cls.get_auth_service()
@@ -129,30 +134,3 @@ class Container:
         return cls._get_or_create('hybrid_pacs_controller', lambda: HybridPacsController(
             hybrid_pacs_service, pdf_service
         ))
-
-    @classmethod
-    def get_hybrid_pacs_controller(cls) -> HybridPacsController:
-        return cls.get_pacs_controller()
-
-    @classmethod
-    def reset_instances(cls):
-        cls._instances.clear()
-
-    @classmethod
-    def get_service_info(cls) -> dict:
-        info = {
-            'loaded_services': list(cls._instances.keys()),
-            'local_file_support': 'local_file_service' in cls._instances,
-            'hybrid_pacs_support': 'hybrid_pacs_service' in cls._instances,
-            'pdf_support': 'pdf_service' in cls._instances
-        }
-
-        try:
-            import pydicom
-            info['pydicom_available'] = True
-            info['pydicom_version'] = getattr(pydicom, '__version__', 'unknown')
-        except ImportError:
-            info['pydicom_available'] = False
-            info['pydicom_version'] = None
-
-        return info

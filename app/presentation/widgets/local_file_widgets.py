@@ -11,10 +11,10 @@ from app.services.notification_service import NotificationService
 
 
 class LocalFileLoaderWorker(QObject):
-    progress_updated = pyqtSignal(int, str)  # progress, current_file
-    file_loaded = pyqtSignal(dict)  # file_data
-    folder_loaded = pyqtSignal(list)  # list of studies
-    error_occurred = pyqtSignal(str)  # error_message
+    progress_updated = pyqtSignal(int, str)
+    file_loaded = pyqtSignal(dict)
+    folder_loaded = pyqtSignal(list)
+    error_occurred = pyqtSignal(str)
     finished = pyqtSignal()
 
     def __init__(self, local_file_service, file_paths: List[str] = None, folder_path: str = None):
@@ -63,7 +63,7 @@ class LocalFileLoaderWorker(QObject):
 
 
 class LocalFileManagerWidget(QWidget):
-    studies_updated = pyqtSignal()  # Emitted when local studies are updated
+    studies_updated = pyqtSignal()
 
     def __init__(self, local_file_service, parent=None):
         super().__init__(parent)
@@ -89,15 +89,15 @@ class LocalFileManagerWidget(QWidget):
         # Load buttons
         buttons_layout = QHBoxLayout()
 
-        self.load_files_button = QPushButton("📂 Load DICOM Files")
+        self.load_files_button = QPushButton("Load DICOM Files")
         self.load_files_button.setObjectName("LoadFilesButton")
         self.load_files_button.clicked.connect(self._load_dicom_files)
 
-        self.load_folder_button = QPushButton("📁 Load DICOM Folder")
+        self.load_folder_button = QPushButton("Load DICOM Folder")
         self.load_folder_button.setObjectName("LoadFolderButton")
         self.load_folder_button.clicked.connect(self._load_dicom_folder)
 
-        self.clear_button = QPushButton("🗑️ Clear All")
+        self.clear_button = QPushButton("Clear All")
         self.clear_button.setObjectName("ClearButton")
         self.clear_button.clicked.connect(self._clear_local_studies)
 
@@ -123,7 +123,7 @@ class LocalFileManagerWidget(QWidget):
         # Local studies list (collapsible)
         self.studies_group = QGroupBox("Loaded Local Studies")
         self.studies_group.setCheckable(True)
-        self.studies_group.setChecked(False)  # Collapsed by default
+        self.studies_group.setChecked(False)
         studies_layout = QVBoxLayout(self.studies_group)
 
         self.local_studies_list = QListWidget()
@@ -134,7 +134,6 @@ class LocalFileManagerWidget(QWidget):
 
         layout.addWidget(self.studies_group)
 
-        # Update initial state
         self._update_local_studies_display()
 
     def _load_dicom_files(self):
@@ -222,7 +221,6 @@ class LocalFileManagerWidget(QWidget):
         self.status_label.setText(message)
 
     def _on_file_loaded(self, file_data: Dict[str, Any]):
-        # File data contains: study_id, metadata, instance_id
         self._update_local_studies_display()
 
     def _on_folder_loaded(self, studies: List[Dict[str, Any]]):
@@ -312,13 +310,12 @@ class LocalFileManagerWidget(QWidget):
 
         menu = QMenu(self)
 
-        # View details action
-        view_action = QAction("👁️ View Details", self)
+        view_action = QAction("View Details", self)
         view_action.triggered.connect(lambda: self._view_local_study_details(study_id))
         menu.addAction(view_action)
 
         # Remove action
-        remove_action = QAction("🗑️ Remove from List", self)
+        remove_action = QAction("Remove from List", self)
         remove_action.triggered.connect(lambda: self._remove_local_study(study_id))
         menu.addAction(remove_action)
 
@@ -377,21 +374,21 @@ class LocalStudyDetailsDialog(QMessageBox):
         for key, value in metadata.items():
             details_text += f"• **{key}:** {value}\n"
 
-        details_text += f"\n📁 **Files ({len(instances)}):**\n"
+        details_text += f"\n**Files ({len(instances)}):**\n"
         for i, instance in enumerate(instances, 1):
             file_path = instance.get("FilePath", "Unknown")
             filename = os.path.basename(file_path) if file_path else "Unknown"
             details_text += f"{i}. {filename}\n"
 
         if examination_result:
-            details_text += f"\n📝 **Examination Result:**\n{examination_result}"
+            details_text += f"\n**Examination Result:**\n{examination_result}"
         else:
-            details_text += f"\n📝 **Examination Result:** Not set"
+            details_text += f"\n**Examination Result:** Not set"
 
         self.setText(details_text)
 
         # Make it resizable
-        self.setDetailedText("")  # This makes it resizable
+        self.setDetailedText("")
         self.setStandardButtons(QMessageBox.StandardButton.Ok)
 
 

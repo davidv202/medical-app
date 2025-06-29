@@ -12,7 +12,7 @@ class DicomAnonymizer:
             # Citește DICOM din memorie
             dataset = pydicom.dcmread(BytesIO(dicom_data))
 
-            # Generează ID anonim consistent
+            # Generează ID anonim
             anonymous_id = self.generate_anonymous_id(dataset)
 
             # Anonimizează câmpurile principale
@@ -32,7 +32,6 @@ class DicomAnonymizer:
             if hasattr(dataset, 'StudyID'):
                 dataset.StudyID = f"STUDY{anonymous_id[-6:]}"
 
-            # Elimină câmpurile opționale cu date personale
             personal_fields = [
                 'PatientAddress', 'PatientTelephoneNumbers', 'EthnicGroup',
                 'PatientComments', 'OtherPatientIDs', 'OtherPatientNames'
@@ -42,10 +41,6 @@ class DicomAnonymizer:
                 if hasattr(dataset, field):
                     setattr(dataset, field, "")
 
-            # Elimină tag-urile private
-            dataset.remove_private_tags()
-
-            # Salvează în memorie
             output = BytesIO()
             dataset.save_as(output, write_like_original=False)
             return output.getvalue()
@@ -56,7 +51,6 @@ class DicomAnonymizer:
 
     def generate_anonymous_id(self, dataset) -> str:
         try:
-            # Folosește datele originale pentru ID consistent
             patient_name = str(getattr(dataset, 'PatientName', '')).strip()
             patient_id = str(getattr(dataset, 'PatientID', '')).strip()
             birth_date = str(getattr(dataset, 'PatientBirthDate', '')).strip()

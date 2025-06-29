@@ -91,7 +91,7 @@ QLabel#InputLabel {
 }
 
 /* Input-uri moderne */
-QLineEdit#ModernInput {
+QLineEdit#CredentialInput {
     background: rgba(255, 255, 255, 0.85);
     border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 12px;
@@ -102,20 +102,20 @@ QLineEdit#ModernInput {
     min-height: 18px;
 }
 
-QLineEdit#ModernInput:focus {
+QLineEdit#CredentialInput:focus {
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid #667eea;
     outline: none;
 }
 
-QLineEdit#ModernInput::placeholder {
+QLineEdit#CredentialInput::placeholder {
     color: #a0aec0;
     font-style: italic;
     font-weight: 400;
 }
 
 /* Button de login */
-QPushButton#ModernLoginButton {
+QPushButton#LoginButton {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #667eea, stop:0.5 #764ba2, stop:1 #667eea);
     color: white;
@@ -128,18 +128,18 @@ QPushButton#ModernLoginButton {
     letter-spacing: 0.5px;
 }
 
-QPushButton#ModernLoginButton:hover {
+QPushButton#LoginButton:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #5a67d8, stop:0.5 #6b46c1, stop:1 #5a67d8);
 }
 
-QPushButton#ModernLoginButton:pressed {
+QPushButton#LoginButton:pressed {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #4c51bf, stop:0.5 #553c9a, stop:1 #4c51bf);
     padding: 14px 22px;
 }
 
-QPushButton#ModernLoginButton:disabled {
+QPushButton#LoginButton:disabled {
     background: rgba(160, 174, 192, 0.6);
     color: rgba(160, 174, 192, 0.8);
 }
@@ -1148,7 +1148,7 @@ QLabel#InputLabel {
 }
 
 /* Input-uri moderne */
-QLineEdit#ModernInput {
+QLineEdit#CredentialInput {
     background: rgba(255, 255, 255, 0.85);
     border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 12px;
@@ -1159,20 +1159,20 @@ QLineEdit#ModernInput {
     min-height: 18px;
 }
 
-QLineEdit#ModernInput:focus {
+QLineEdit#CredentialInput:focus {
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid #667eea;
     outline: none;
 }
 
-QLineEdit#ModernInput::placeholder {
+QLineEdit#CredentialInput::placeholder {
     color: #a0aec0;
     font-style: italic;
     font-weight: 400;
 }
 
 /* Button de login */
-QPushButton#ModernLoginButton {
+QPushButton#LoginButton {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #667eea, stop:0.5 #764ba2, stop:1 #667eea);
     color: white;
@@ -1185,18 +1185,18 @@ QPushButton#ModernLoginButton {
     letter-spacing: 0.5px;
 }
 
-QPushButton#ModernLoginButton:hover {
+QPushButton#LoginButton:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #5a67d8, stop:0.5 #6b46c1, stop:1 #5a67d8);
 }
 
-QPushButton#ModernLoginButton:pressed {
+QPushButton#LoginButton:pressed {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #4c51bf, stop:0.5 #553c9a, stop:1 #4c51bf);
     padding: 14px 22px;
 }
 
-QPushButton#ModernLoginButton:disabled {
+QPushButton#LoginButton:disabled {
     background: rgba(160, 174, 192, 0.6);
     color: rgba(160, 174, 192, 0.8);
 }

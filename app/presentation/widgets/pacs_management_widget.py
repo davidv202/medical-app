@@ -28,7 +28,6 @@ class PacsManagementWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side - PACS list
@@ -58,7 +57,7 @@ class PacsManagementWidget(QWidget):
         self.pacs_search_input.setObjectName("SearchInput")
         self.pacs_search_input.textChanged.connect(self._filter_pacs)
 
-        self.clear_pacs_search_button = QPushButton("✕")
+        self.clear_pacs_search_button = QPushButton("x")
         self.clear_pacs_search_button.setObjectName("ClearSearchButton")
         self.clear_pacs_search_button.setMaximumWidth(25)
         self.clear_pacs_search_button.setToolTip("Sterge cautarea")
@@ -202,7 +201,7 @@ class PacsManagementWidget(QWidget):
 
         restart_button_layout = QHBoxLayout()
 
-        self.restart_app_button = QPushButton("🔄 Restart Aplicație")
+        self.restart_app_button = QPushButton("Restart Aplicație")
         self.restart_app_button.setObjectName("RestartButton")
         self.restart_app_button.clicked.connect(self._restart_application)
 
@@ -216,13 +215,10 @@ class PacsManagementWidget(QWidget):
         layout.addStretch()
         return widget
 
-    # Public methods
     def refresh_data(self):
-        """Public method to refresh PACS data"""
         self._load_pacs_urls()
 
     def focus_search(self):
-        """Public method to focus search input"""
         self.pacs_search_input.setFocus()
 
     def clear_search_if_focused(self):
@@ -232,7 +228,6 @@ class PacsManagementWidget(QWidget):
     def edit_selected(self):
         self._edit_selected_pacs()
 
-    # Private methods
     def _load_pacs_urls(self):
         try:
             pacs_service = Container.get_pacs_url_service()
@@ -260,7 +255,6 @@ class PacsManagementWidget(QWidget):
             self._notification_service.show_error(self, "Eroare", f"Nu s-au putut incarca URL-urile PACS: {e}")
 
     def _filter_pacs(self, text: str):
-        """Filter PACS URLs based on search text"""
         self.clear_pacs_search_button.setVisible(bool(text.strip()))
 
         if not text.strip():
@@ -293,19 +287,16 @@ class PacsManagementWidget(QWidget):
         self.pacs_results_label.setVisible(True)
 
     def _show_all_pacs(self):
-        """Show all PACS URLs"""
         for row in range(self.pacs_table.rowCount()):
             self.pacs_table.setRowHidden(row, False)
         self.pacs_results_label.setVisible(False)
 
     def _clear_pacs_search(self):
-        """Clear PACS search"""
         self.pacs_search_input.clear()
         self.clear_pacs_search_button.setVisible(False)
         self._show_all_pacs()
 
     def _on_pacs_selected(self):
-        """Handle PACS selection"""
         current_row = self.pacs_table.currentRow()
         has_selection = current_row >= 0
 
@@ -314,11 +305,9 @@ class PacsManagementWidget(QWidget):
         self.delete_pacs_button.setEnabled(has_selection)
 
     def _on_pacs_double_clicked(self, item):
-        """Handle PACS double click"""
         self._edit_selected_pacs()
 
     def _edit_selected_pacs(self):
-        """Edit selected PACS"""
         current_row = self.pacs_table.currentRow()
         if current_row < 0:
             return
@@ -353,7 +342,6 @@ class PacsManagementWidget(QWidget):
             self._notification_service.show_error(self, "Eroare", f"Eroare la incarcarea datelor PACS: {e}")
 
     def _cancel_pacs_edit(self):
-        """Cancel PACS edit mode"""
         self._editing_pacs_mode = False
         self._editing_pacs_id = None
 
@@ -364,14 +352,12 @@ class PacsManagementWidget(QWidget):
         self._clear_pacs_form()
 
     def _handle_create_or_update_pacs(self):
-        """Handle create or update PACS"""
         if self._editing_pacs_mode:
             self._handle_update_pacs()
         else:
             self._handle_create_pacs()
 
     def _handle_create_pacs(self):
-        """Handle create new PACS"""
         name = self.pacs_name_input.text().strip()
         url = self.pacs_url_input.text().strip()
         username = self.pacs_username_input.text().strip()
@@ -398,7 +384,6 @@ class PacsManagementWidget(QWidget):
             self._notification_service.show_error(self, "Eroare", f"Nu s-a putut crea PACS-ul: {e}")
 
     def _handle_update_pacs(self):
-        """Handle update existing PACS"""
         name = self.pacs_name_input.text().strip()
         url = self.pacs_url_input.text().strip()
         username = self.pacs_username_input.text().strip()
@@ -430,7 +415,6 @@ class PacsManagementWidget(QWidget):
             self._notification_service.show_error(self, "Eroare", f"Nu s-a putut actualiza PACS-ul: {e}")
 
     def _test_pacs_connection(self):
-        """Test connection to selected PACS"""
         current_row = self.pacs_table.currentRow()
         if current_row >= 0:
             pacs_id = int(self.pacs_table.item(current_row, 0).text())
@@ -459,7 +443,6 @@ class PacsManagementWidget(QWidget):
                 self.test_connection_button.setEnabled(True)
 
     def _delete_pacs_url(self):
-        """Delete selected PACS URL"""
         current_row = self.pacs_table.currentRow()
         if current_row >= 0:
             pacs_id = int(self.pacs_table.item(current_row, 0).text())
@@ -512,7 +495,7 @@ class PacsManagementWidget(QWidget):
             target_pacs_id = settings_service.get_target_pacs_id()
 
             # Add "Auto (First)" option for source
-            self.source_pacs_combo.addItem("🔄 Auto (First PACS)", -1)
+            self.source_pacs_combo.addItem("Auto (First PACS)", -1)
 
             # Track if we found the current selections
             source_found = False
@@ -524,13 +507,13 @@ class PacsManagementWidget(QWidget):
 
                 # Mark current selections with indicators
                 if pacs.id == source_pacs_id:
-                    source_display = f"{display_text}"  # Reading icon for source
+                    source_display = f"{display_text}"
                     source_found = True
                 else:
                     source_display = display_text
 
                 if pacs.id == target_pacs_id:
-                    target_display = f"{display_text}"  # Send icon for target
+                    target_display = f"{display_text}"
                     target_found = True
                 else:
                     target_display = display_text
@@ -632,7 +615,7 @@ class PacsManagementWidget(QWidget):
             )
 
             if final_reply:
-                print("🔄 Restarting application...")
+                print("Restarting application...")
 
                 # Get the current executable path
                 python = sys.executable
@@ -654,6 +637,6 @@ class PacsManagementWidget(QWidget):
 
     def _update_restart_indicator(self):
         if self._needs_restart:
-            self.restart_app_button.setText("🔄 Restart Aplicație (NECESAR)")
+            self.restart_app_button.setText("Restart Aplicație (NECESAR)")
         else:
-            self.restart_app_button.setText("🔄 Restart Aplicație")
+            self.restart_app_button.setText("Restart Aplicație")

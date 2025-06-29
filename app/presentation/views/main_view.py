@@ -15,14 +15,13 @@ class MainView(QWidget):
         self._auth_controller = auth_controller
         self._pacs_controller = pacs_controller
         self.setWindowTitle("Enhanced Medical PACS System")
-        self.setGeometry(100, 100, 1800, 900)  # Larger window for enhanced features
+        self.setGeometry(100, 100, 1800, 900)
         self._setup_ui()
         load_style(self)
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
 
-        # Enhanced navigation bar with more info
         self.nav_widget = QWidget()
         self.nav_widget.setObjectName("NavBar")
         nav_bar = QHBoxLayout(self.nav_widget)

@@ -60,7 +60,7 @@ class UserManagementWidget(QWidget):
         self.user_search_input.setObjectName("SearchInput")
         self.user_search_input.textChanged.connect(self._filter_users)
 
-        self.clear_user_search_button = QPushButton("✕")
+        self.clear_user_search_button = QPushButton("x")
         self.clear_user_search_button.setObjectName("ClearSearchButton")
         self.clear_user_search_button.setMaximumWidth(25)
         self.clear_user_search_button.setToolTip("Sterge cautarea")
@@ -179,25 +179,19 @@ class UserManagementWidget(QWidget):
 
         return widget
 
-    # Public methods
     def refresh_data(self):
-        """Public method to refresh user data"""
         self._load_users()
 
     def focus_search(self):
-        """Public method to focus search input"""
         self.user_search_input.setFocus()
 
     def clear_search_if_focused(self):
-        """Public method to clear search if focused"""
         if self.user_search_input.hasFocus():
             self._clear_user_search()
 
     def edit_selected(self):
-        """Public method to edit selected user"""
         self._edit_selected_user()
 
-    # Private methods
     def _load_users(self):
         try:
             user_repo = Container.get_user_repository()

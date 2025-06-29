@@ -130,7 +130,6 @@ class HybridPacsController:
             settings = Settings()
             target_url, target_auth = settings.get_target_pacs_config()
 
-            # Confirm send operation
             study_count = len(queued_studies)
             studies_with_results = sum(1 for qs in queued_studies if qs.examination_result.strip())
             local_studies_count = sum(1 for qs in queued_studies if self._is_local_study(qs.study_id))
@@ -149,7 +148,6 @@ class HybridPacsController:
             if not self._notification_service.ask_confirmation(parent_widget, "Confirmare trimitere", confirm_message):
                 return False
 
-            # Debug authentication
             print(f"Debug: Sending to selected target PACS {target_url} with auth {target_auth[0]}:***")
 
             # Send studies
@@ -227,9 +225,9 @@ class HybridPacsController:
             )
 
             if success:
-                print(f"✓ {study_type} study {study_id} sent successfully")
+                print(f"{study_type} study {study_id} sent successfully")
             else:
-                print(f"✗ Failed to send {study_type} study {study_id}")
+                print(f"Failed to send {study_type} study {study_id}")
 
             return success
 
@@ -345,19 +343,21 @@ class StudiesWorker(QObject):
 
 
 class QueueSenderWorker(QObject):
-    progress_updated = pyqtSignal(int, str)  # progress, current_study
-    sending_completed = pyqtSignal(bool, str)  # success, message
+    progress_updated = pyqtSignal(int, str)
+    sending_completed = pyqtSignal(bool, str)
 
-    def __init__(self, pacs_controller, queued_studies: List, target_url: str):
+    def __init__(self, pacs_controller, queued_studies: List):
         super().__init__()
         self._pacs_controller = pacs_controller
         self._queued_studies = queued_studies
-        self._target_url = target_url
 
     def run(self):
         try:
             settings = Settings()
-            target_auth = settings.PACS_AUTH_2 if self._target_url == settings.PACS_URL_2 else settings.PACS_AUTH
+            target_url, target_auth = settings.get_target_pacs_config()
+
+            if not target_url or not target_auth:
+                self.sending_completed.emit(False, "Target PACS is not correctly configured by the Admin.")
 
             success_count = 0
             failed_studies = []
@@ -374,7 +374,7 @@ class QueueSenderWorker(QObject):
                 try:
                     success = self._pacs_controller._send_study_to_target_pacs(
                         queued_study.study_id,
-                        self._target_url,
+                        target_url,
                         target_auth,
                         queued_study.examination_result if queued_study.examination_result.strip() else None
                     )

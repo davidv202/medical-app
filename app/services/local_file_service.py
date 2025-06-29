@@ -139,7 +139,7 @@ class LocalFileService(ILocalFileService):
     def send_local_study_to_pacs(self, study_id: str, target_url: str, target_auth: Tuple[str, str],
                                  examination_result: str = None, dicom_modifier_callback=None) -> bool:
         try:
-            print(f"📤 LocalFileService: Sending local study {study_id} to {target_url}")
+            print(f"LocalFileService: Sending local study {study_id} to {target_url}")
 
             if study_id not in self.local_studies:
                 raise PacsDataError(f"Local study {study_id} not found")
@@ -148,16 +148,16 @@ class LocalFileService(ILocalFileService):
             existing_study_id = self._find_existing_study_in_target(study_id, target_url, target_auth)
 
             if existing_study_id:
-                print(f"📝 Local study exists in target PACS (ID: {existing_study_id}) - UPDATING")
+                print(f"Local study exists in target PACS (ID: {existing_study_id}) - UPDATING")
                 if not self._delete_existing_study(existing_study_id, target_url, target_auth):
-                    print(f"❌ Failed to delete existing study, aborting update")
+                    print(f"Failed to delete existing study, aborting update")
                     return False
-                print(f"🔄 Recreating local study with new examination result...")
+                print(f"Recreating local study with new examination result...")
 
             return self._create_new_local_study(study_id, target_url, target_auth, examination_result)
 
         except Exception as e:
-            print(f"❌ LocalFileService: Error sending local study {study_id}: {e}")
+            print(f"LocalFileService: Error sending local study {study_id}: {e}")
             return False
 
     def get_all_local_studies(self) -> List[str]:
@@ -241,7 +241,6 @@ class LocalFileService(ILocalFileService):
             study_id = self._get_study_id_for_instance(instance_id)
             return self.examination_results.get(study_id, "")
 
-    # Private helper methods
     def _find_existing_study_in_target(self, source_study_id: str, target_url: str, target_auth: Tuple[str, str]) -> str:
         try:
             source_metadata = self.get_local_study_metadata(source_study_id)
@@ -250,7 +249,7 @@ class LocalFileService(ILocalFileService):
             if not study_instance_uid:
                 return None
 
-            print(f"🔍 Looking for local study with UID: {study_instance_uid}")
+            print(f"Looking for local study with UID: {study_instance_uid}")
 
             response = requests.get(f"{target_url}/studies", auth=HTTPBasicAuth(*target_auth), timeout=30)
             target_studies = response.json()
@@ -274,7 +273,7 @@ class LocalFileService(ILocalFileService):
 
     def _delete_existing_study(self, target_study_id: str, target_url: str, target_auth: Tuple[str, str]) -> bool:
         try:
-            print(f"🗑️ Deleting existing study {target_study_id}...")
+            print(f"Deleting existing study {target_study_id}...")
             delete_response = requests.delete(
                 f"{target_url}/studies/{target_study_id}",
                 auth=HTTPBasicAuth(*target_auth),
@@ -282,13 +281,13 @@ class LocalFileService(ILocalFileService):
             )
 
             if delete_response.status_code == 200:
-                print(f"✅ Existing study deleted successfully")
+                print(f"Existing study deleted successfully")
                 return True
             else:
-                print(f"❌ Failed to delete existing study: {delete_response.status_code}")
+                print(f"Failed to delete existing study: {delete_response.status_code}")
                 return False
         except Exception as e:
-            print(f"❌ Error deleting existing study: {e}")
+            print(f"Error deleting existing study: {e}")
             return False
 
     def _create_new_local_study(self, study_id: str, target_url: str, target_auth: Tuple[str, str], examination_result: str) -> bool:
@@ -299,7 +298,7 @@ class LocalFileService(ILocalFileService):
 
             success_count = 0
             total_instances = len(instances)
-            print(f"📤 Creating new local study with {total_instances} instances...")
+            print(f"Creating new local study with {total_instances} instances...")
 
             for i, instance in enumerate(instances):
                 instance_id = instance.get("ID")
@@ -307,25 +306,25 @@ class LocalFileService(ILocalFileService):
                     continue
 
                 try:
-                    print(f"   🔄 Processing local instance {i + 1}/{total_instances}: {instance_id}")
+                    print(f"Processing local instance {i + 1}/{total_instances}: {instance_id}")
 
                     # Read local DICOM file
                     dicom_data = self.get_local_dicom_file(instance_id)
                     print(f"      📥 Read local DICOM: {len(dicom_data)} bytes")
 
                     # Anonymize
-                    print(f"      🔒 Anonymizing local DICOM data...")
+                    print(f"Anonymizing local DICOM data...")
                     dicom_data = self._anonymizer.anonymize_dicom(dicom_data)
-                    print(f"      🔒 Local DICOM anonymized: {len(dicom_data)} bytes")
+                    print(f"Local DICOM anonymized: {len(dicom_data)} bytes")
 
                     # Add examination result if provided
                     if examination_result:
-                        print(f"      📝 Adding examination result: {len(examination_result)} chars")
+                        print(f"Adding examination result: {len(examination_result)} chars")
                         dicom_data = self._add_examination_result_to_dicom(dicom_data, examination_result)
-                        print(f"      📝 Modified local DICOM: {len(dicom_data)} bytes")
+                        print(f"Modified local DICOM: {len(dicom_data)} bytes")
 
                     # Send to target PACS
-                    print(f"      📤 Sending to {target_url}/instances...")
+                    print(f"Sending to {target_url}/instances...")
                     response = requests.post(
                         f"{target_url}/instances",
                         data=dicom_data,
@@ -336,19 +335,19 @@ class LocalFileService(ILocalFileService):
 
                     if response.status_code == 200:
                         success_count += 1
-                        print(f"      ✅ Local instance sent successfully")
+                        print(f"Local instance sent successfully")
                     else:
-                        print(f"      ❌ Failed to send local instance: {response.status_code}")
+                        print(f"Failed to send local instance: {response.status_code}")
 
                 except Exception as e:
-                    print(f"      ❌ Error sending local instance {instance_id}: {e}")
+                    print(f"Error sending local instance {instance_id}: {e}")
                     continue
 
-            print(f"   📊 Final result: {success_count}/{total_instances} local instances sent")
+            print(f"Final result: {success_count}/{total_instances} local instances sent")
             return success_count == total_instances
 
         except Exception as e:
-            print(f"❌ Error creating new local study: {e}")
+            print(f"Error creating new local study: {e}")
             return False
 
     def _add_examination_result_to_dicom(self, dicom_data: bytes, examination_result: str) -> bytes:

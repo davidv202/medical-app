@@ -15,14 +15,13 @@ class QueuedStudy(NamedTuple):
     description: str
 
 class SearchableStudyListWidget(QWidget):
-    study_selected = pyqtSignal(str)  # study_id
+    study_selected = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.all_studies: List[Tuple[str, str]] = []  # (study_id, display_text)
-        self.filtered_studies: Dict[str, str] = {}  # display_text -> study_id
+        self.all_studies: List[Tuple[str, str]] = []
+        self.filtered_studies: Dict[str, str] = {}
 
-        # Search delay timer to avoid searching on every keystroke
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self._perform_search)
@@ -38,11 +37,11 @@ class SearchableStudyListWidget(QWidget):
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setObjectName("SearchInput")
-        self.search_input.setPlaceholderText("🔍 Caută studii...")
+        self.search_input.setPlaceholderText("Caută studii...")
         self.search_input.textChanged.connect(self._on_search_text_changed)
         self.search_input.returnPressed.connect(self._perform_search)
 
-        self.clear_button = QPushButton("✕")
+        self.clear_button = QPushButton("x")
         self.clear_button.setObjectName("ClearSearchButton")
         self.clear_button.setMaximumWidth(30)
         self.clear_button.clicked.connect(self._clear_search)
@@ -69,18 +68,15 @@ class SearchableStudyListWidget(QWidget):
         self.study_list.setObjectName("StudyList")
         self.study_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.study_list.itemClicked.connect(self._on_item_clicked)
-
-        # Nu mai setăm fixed height pe listă!
         self.study_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        # ScrollArea doar pentru listă
+        # ScrollArea
         scroll_area = QScrollArea()
         scroll_area.setObjectName("StudyListScrollArea")
         scroll_area.setWidgetResizable(True)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        # Încapsulăm lista în container pentru scrollarea ei
         list_container = QWidget()
         list_layout = QVBoxLayout(list_container)
         list_layout.setContentsMargins(0, 0, 0, 0)
@@ -91,10 +87,8 @@ class SearchableStudyListWidget(QWidget):
         layout.addWidget(scroll_area)
 
     def _on_search_text_changed(self, text: str):
-        # Show/hide clear button
         self.clear_button.setVisible(bool(text.strip()))
 
-        # Stop any pending search and start new timer
         self.search_timer.stop()
         if text.strip():
             self.search_timer.start(300)  # 300ms delay
@@ -123,7 +117,6 @@ class SearchableStudyListWidget(QWidget):
         for study_id, display_text in filtered_studies:
             self.filtered_studies[display_text] = study_id
 
-            # Highlight search terms (simple approach)
             highlighted_text = self._highlight_search_terms(display_text, search_text)
             item = QListWidgetItem(highlighted_text)
             item.setData(Qt.ItemDataRole.UserRole, study_id)
@@ -143,8 +136,6 @@ class SearchableStudyListWidget(QWidget):
         self.results_label.setVisible(True)
 
     def _highlight_search_terms(self, text: str, search_term: str) -> str:
-        # For now, just return the original text
-        # In a more advanced implementation, you could use HTML formatting
         return text
 
     def _show_all_studies(self):
@@ -167,7 +158,6 @@ class SearchableStudyListWidget(QWidget):
     def add_study(self, study_id: str, display_text: str):
         self.all_studies.append((study_id, display_text))
 
-        # If no search is active, add to visible list
         if not self.search_input.text().strip():
             self.filtered_studies[display_text] = study_id
             item = QListWidgetItem(display_text)
@@ -240,13 +230,12 @@ class StudyQueueWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
 
-        # Queue header with count
         header_layout = QHBoxLayout()
 
         self.queue_count_label = QLabel("(0 studii)")
         self.queue_count_label.setStyleSheet("color: #6b7280; font-size: 12px;")
 
-        self.clear_queue_button = QPushButton("🗑️ Clear")
+        self.clear_queue_button = QPushButton("Clear")
         self.clear_queue_button.setObjectName("ClearSearchButton")
         self.clear_queue_button.setMaximumWidth(60)
         self.clear_queue_button.setMaximumHeight(25)
@@ -277,7 +266,7 @@ class StudyQueueWidget(QWidget):
         # Check if study is already in queue
         for queued_study in self.queued_studies:
             if queued_study.study_id == study_id:
-                return False  # Already in queue
+                return False
 
         # Create queued study object
         queued_study = QueuedStudy(
@@ -344,11 +333,11 @@ class StudyQueueWidget(QWidget):
 
             menu = QMenu(self)
 
-            remove_action = QAction("🗑️ Elimină din queue", self)
+            remove_action = QAction("Elimină din queue", self)
             remove_action.triggered.connect(lambda: self._remove_selected_item())
             menu.addAction(remove_action)
 
-            view_result_action = QAction("👁️ Vezi rezultatul", self)
+            view_result_action = QAction("Vezi rezultatul", self)
             view_result_action.triggered.connect(lambda: self._view_result_for_item(item))
             menu.addAction(view_result_action)
 
