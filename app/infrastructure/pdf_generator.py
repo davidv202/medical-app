@@ -11,7 +11,6 @@ class PdfGenerator:
         generated_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         current_year = datetime.now().strftime("%Y")
 
-        # Filtrează și organizează metadatele pentru pacient
         patient_metadata = self._filter_patient_metadata(metadata)
 
         html_content = self._build_html_content(
