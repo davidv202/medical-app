@@ -9,20 +9,17 @@ class DicomAnonymizer:
 
     def anonymize_dicom(self, dicom_data: bytes) -> bytes:
         try:
-            # Citește DICOM din memorie
             dataset = pydicom.dcmread(BytesIO(dicom_data))
 
-            # Generează ID anonim
+            # Genereaza ID anonim unic
             anonymous_id = self.generate_anonymous_id(dataset)
 
-            # Anonimizează câmpurile principale
             dataset.PatientName = f"ANONYMOUS^{anonymous_id[-6:]}"
             dataset.PatientID = anonymous_id
             dataset.PatientBirthDate = ""
             dataset.PatientSex = ""
             dataset.PatientAge = ""
 
-            # Anonimizează câmpurile instituționale
             if hasattr(dataset, 'InstitutionName'):
                 dataset.InstitutionName = "ANONYMOUS_HOSPITAL"
             if hasattr(dataset, 'ReferringPhysicianName'):
