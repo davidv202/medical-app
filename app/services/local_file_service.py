@@ -23,7 +23,6 @@ class LocalFileService(ILocalFileService):
 
         os.makedirs(cache_dir, exist_ok=True)
 
-        # Adaugă anonimizatorul
         from app.di.container import Container
         self._anonymizer = Container.get_dicom_anonymizer_service()
 
@@ -36,7 +35,6 @@ class LocalFileService(ILocalFileService):
 
             dataset = pydicom.dcmread(file_path)
             metadata = self._extract_metadata_from_dataset(dataset)
-
             study_instance_uid = getattr(dataset, 'StudyInstanceUID', str(uuid.uuid4()))
             study_id = f"local_{abs(hash(study_instance_uid)) % 1000000}"
             instance_id = f"local_{abs(hash(getattr(dataset, 'SOPInstanceUID', str(uuid.uuid4())))) % 1000000}"
@@ -396,11 +394,12 @@ class LocalFileService(ILocalFileService):
     def _extract_metadata_from_dataset(self, dataset) -> Dict[str, Any]:
         try:
             return {
-                "Patient Name": str(getattr(dataset, 'PatientName', 'Unknown')).replace('^', ' '),
+                "Patient Name": str(getattr(dataset, 'PatientName', 'N/A')).replace('^', ' '),
                 "Patient Birth Date": self._format_date(getattr(dataset, 'PatientBirthDate', '')),
-                "Patient Sex": str(getattr(dataset, 'PatientSex', 'Unknown')),
+                "Patient Sex": str(getattr(dataset, 'PatientSex', 'N/A')),
+                "Patient Age": str(getattr(dataset, 'PatientAge', 'N/A')),
                 "Study Date": self._format_date(getattr(dataset, 'StudyDate', '')),
-                "Study Instance UID": str(getattr(dataset, 'StudyInstanceUID', 'Unknown')),
+                "Study Instance UID": str(getattr(dataset, 'StudyInstanceUID', 'N/A')),
                 "Description": str(getattr(dataset, 'StudyDescription', 'Local DICOM Study')),
                 "Series Status": "LOCAL",
                 "Source": "Local File"
@@ -408,11 +407,12 @@ class LocalFileService(ILocalFileService):
         except Exception as e:
             print(f"Warning: Error extracting metadata: {e}")
             return {
-                "Patient Name": "Unknown",
-                "Patient Birth Date": "Unknown",
-                "Patient Sex": "Unknown",
+                "Patient Name": "N/A",
+                "Patient Birth Date": "N/A",
+                "Patient Sex": "N/A",
+                "Patient Age": "N/A",
                 "Study Date": datetime.now().strftime("%Y-%m-%d"),
-                "Study Instance UID": "Unknown",
+                "Study Instance UID": "N/A",
                 "Description": "Local DICOM Study",
                 "Series Status": "LOCAL",
                 "Source": "Local File"

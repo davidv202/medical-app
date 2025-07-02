@@ -1,3 +1,5 @@
+import re
+from datetime import datetime
 from PyQt6.QtWidgets import QTextEdit, QWidget, QVBoxLayout, QToolBar, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
 from PyQt6.QtGui import QAction, QFont, QTextCharFormat
 from typing import Dict, Any
@@ -50,9 +52,9 @@ class ResultWidget(QWidget):
         indication_layout.addWidget(self.age_input)
 
         indication_layout.addWidget(QLabel("Dignosis:"))
-        self.diagnostic_input = QLineEdit()
-        self.diagnostic_input.setMinimumWidth(300)
-        indication_layout.addWidget(self.diagnostic_input)
+        self.diagnosis_input = QLineEdit()
+        self.diagnosis_input.setMinimumWidth(300)
+        indication_layout.addWidget(self.diagnosis_input)
 
         self.generate_button = QPushButton("Generate Text")
         self.generate_button.setMaximumWidth(30)
@@ -77,6 +79,68 @@ class ResultWidget(QWidget):
         self.text_edit.currentCharFormatChanged.connect(self._update_toolbar)
         
         layout.addWidget(self.text_edit)
+
+    def update_from_metadata(self, metadata: Dict[str, Any]):
+        try:
+            patient_age = metadata.get("Patient Age", "")
+
+            if patient_age and patient_age != "N/A":
+                age_number = self._extract_age_number(patient_age)
+                print(age_number)
+                if age_number:
+                    self.age_input.setText(str(age_number))
+                    print(f"Auto-loaded age from DICOM: {age_number}")
+                else:
+                    self.age_input.clear()
+            else:
+                birth_date = metadata.get("Patient Birth Date", "")
+                clean_date = birth_date.replace("-", "")
+                if clean_date and clean_date != "N/A":
+                    calculated_age = self._calculate_age_from_birth_date(clean_date)
+                    if calculated_age:
+                        self.age_input.setText(str(calculated_age))
+                        print(f"Calculated age from birth date: {calculated_age}")
+                    else:
+                        self.age_input.clear()
+                else:
+                    self.age_input.clear()
+
+        except Exception as e:
+            print(f"Error updating fields from metadata: {e}")
+            self.age_input.clear()
+
+    def _extract_age_number(self, age_string: str) -> int:
+        try:
+            numbers = re.findall(r'\d+', age_string)
+            if numbers:
+                age = int(numbers[0])
+                if 0 <= age <= 150:
+                    return age
+            return None
+        except (ValueError, TypeError):
+            return None
+
+    def _calculate_age_from_birth_date(self, birth_date: str) -> int:
+        try:
+            if len(birth_date) == 8 and birth_date.isdigit():
+                year = int(birth_date[:4])
+                month = int(birth_date[4:6])
+                day = int(birth_date[6:8])
+
+                birth_datetime = datetime(year, month, day)
+                today = datetime.now()
+
+                age = today.year - birth_datetime.year
+
+                if today.month < birth_datetime.month or \
+                        (today.month == birth_datetime.month and today.day < birth_datetime.day):
+                    age -= 1
+
+                if 0 <= age <= 150:
+                    return age
+            return None
+        except (ValueError, TypeError):
+            return None
 
     def _create_format_actions(self):
         # Bold
@@ -125,7 +189,7 @@ class ResultWidget(QWidget):
 
     def _generate_text(self):
         age = self.age_input.text().strip()
-        diagnosis = self.diagnostic_input.text().strip()
+        diagnosis = self.diagnosis_input.text().strip()
         
         if not age or not diagnosis:
             NotificationService.show_warning(self, "Date incomplete", 
@@ -137,7 +201,7 @@ class ResultWidget(QWidget):
                                              "Varsta trebuie sa fie un numar.")
             return
         
-        # Folosește HTML pentru formatare
+        # HTML pentru formatare
         indicatie_html = f"""<p><b><i>Indicație:</i></b> pacient în vârsta de {age} ani este diagnosticat cu {diagnosis}</p>
 
         <p><b><i>Realizare:</i></b> </p>
@@ -146,11 +210,9 @@ class ResultWidget(QWidget):
 
         <p><b>CONCLUZII<b><p>
         """
-        
-        # Setează HTML în loc de text simplu
+
         self.text_edit.setHtml(indicatie_html)
-        
-        # Poziționează cursorul după "Realizare:"
+
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
         self.text_edit.setTextCursor(cursor)
@@ -169,5 +231,8 @@ class ResultWidget(QWidget):
     def set_result_text(self, text: str):
         self.text_edit.setPlainText(text)
 
-    def clear_result(self):
+    def clear_result(self, clear_all=False):
         self.text_edit.clear()
+        if clear_all:
+            self.age_input.clear()
+            self.diagnosis_input.clear()

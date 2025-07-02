@@ -313,6 +313,8 @@ class EnhancedPacsView(QWidget):
             metadata = self._pacs_controller.get_study_metadata(study_id)
             self.metadata_widget.display_metadata(metadata)
 
+            self.result_widget.update_from_metadata(metadata)
+
             # Load examination result if available
             examination_result = self._pacs_controller.get_examination_result_from_study(study_id)
             if examination_result:
