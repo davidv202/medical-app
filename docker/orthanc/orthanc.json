@@ -1,0 +1,11 @@
+{
+	"Name": "Orthanc",
+	"HttpPort": 8042,
+	"DicomPort": 4242,
+	"BindAddress": "0.0.0.0",
+	"RemoteAccessAllowed": true,
+	"AuthenticationEnabled": true,
+	"RegisteredUsers": {
+		"admin": "parola_tare"
+	}
+}
