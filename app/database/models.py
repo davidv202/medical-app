@@ -39,3 +39,11 @@ class AppSettings(Base):
     description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ReportTitle(Base):
+    __tablename__ = "report_title"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title_text = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

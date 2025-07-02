@@ -4,6 +4,7 @@ from app.config.database import DatabaseConfig
 # Infrastructure
 from app.infrastructure.http_client import HttpClient
 from app.infrastructure.pdf_generator import PdfGenerator
+from app.repositories.report_title_repository import ReportTitleRepository
 from app.repositories.settings_repository import SettingsRepository
 
 # Repositories
@@ -14,6 +15,7 @@ from app.repositories.pacs_url_repository import PacsUrlRepository
 from app.services.auth_service import AuthService
 from app.services.dicom_anonymizer_service import DicomAnonymizer
 from app.services.pacs_url_service import PacsUrlService
+from app.services.report_title_service import ReportTitleService
 from app.services.session_service import SessionService
 from app.services.pacs_service import PacsService
 from app.services.local_file_service import LocalFileService
@@ -65,6 +67,11 @@ class Container:
     def get_settings_repository(cls) -> SettingsRepository:
         db_config = cls.get_database_config()
         return cls._get_or_create('settings_repository', lambda: SettingsRepository(db_config))
+
+    @classmethod
+    def get_report_title_repository(cls) -> ReportTitleRepository:
+        db_config = cls.get_database_config()
+        return cls._get_or_create('report_title_repository', lambda: ReportTitleRepository(db_config))
 
     # Services
     @classmethod
@@ -126,6 +133,11 @@ class Container:
         auth_service = cls.get_auth_service()
         session_service = cls.get_session_service()
         return cls._get_or_create('auth_controller', lambda: AuthController(auth_service, session_service))
+
+    @classmethod
+    def get_report_title_service(cls) -> ReportTitleService:
+        report_title_repo = cls.get_report_title_repository()
+        return cls._get_or_create('report_title_service', lambda: ReportTitleService(report_title_repo))
 
     @classmethod
     def get_pacs_controller(cls) -> HybridPacsController:

@@ -690,9 +690,9 @@ QListWidget#QueueList::item {
     font-size: 12px;
     min-height: 15px;
     background: rgba(248, 250, 252, 0.8);
+    color: #000000
 }
 
-/* Table moderne cu glassmorphism */
 QTableWidget {
     background: rgba(255, 255, 255, 0.85);
     border: 2px solid rgba(102, 126, 234, 0.25);

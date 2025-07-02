@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QTextEdit, QWidget, QVBoxLayout, QToolBar, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QTextEdit, QWidget, QVBoxLayout, QToolBar, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
 from PyQt6.QtGui import QAction, QFont, QTextCharFormat
 from typing import Dict, Any
 from app.utils.formatters import Formatters
@@ -25,10 +25,21 @@ class ResultWidget(QWidget):
         super().__init__(parent)
         self.setObjectName("ResultWidget")
         self._setup_ui()
+        self._load_titles()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        
+        title_layout = QHBoxLayout()
+        title_layout.addWidget(QLabel("Title:"))
+        
+        self.title_combo = QComboBox()
+        self.title_combo.setMinimumHeight(300)
+        title_layout.addWidget(self.title_combo)
+
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
         
         indication_layout = QHBoxLayout()
 
@@ -94,23 +105,40 @@ class ResultWidget(QWidget):
         self.bold_action.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
         self.italic_action.setChecked(fmt.fontItalic())
         self.underline_action.setChecked(fmt.fontUnderline())
-        
+
+    def _load_titles(self):
+        try:
+            from app.di.container import Container
+            report_title_service = Container.get_report_title_service()
+
+            self.title_combo.clear()
+            title_texts = report_title_service.get_all_title_texts()
+            self.title_combo.addItems(title_texts)
+
+            default_title = report_title_service.get_default_title()
+            index = self.title_combo.findText(default_title)
+            if index >= 0:
+                self.title_combo.setCurrentIndex(index)
+
+        except Exception as e:
+            print(f"Error loading report titles: {e}")
+
     def _generate_text(self):
-        varsta = self.age_input.text().strip()
-        diagnostic = self.diagnostic_input.text().strip()
+        age = self.age_input.text().strip()
+        diagnosis = self.diagnostic_input.text().strip()
         
-        if not varsta or not diagnostic:
+        if not age or not diagnosis:
             NotificationService.show_warning(self, "Date incomplete", 
                                         "Completează vârsta și diagnosticul.")
             return
 
-        if not varsta.isdigit():
+        if not age.isdigit():
             NotificationService.show_warning(self, "Atentie",
                                              "Varsta trebuie sa fie un numar.")
             return
         
         # Folosește HTML pentru formatare
-        indicatie_html = f"""<p><b><i>Indicație:</i></b> pacient în vârsta de {varsta} ani este diagnosticat cu {diagnostic}</p>
+        indicatie_html = f"""<p><b><i>Indicație:</i></b> pacient în vârsta de {age} ani este diagnosticat cu {diagnosis}</p>
 
         <p><b><i>Realizare:</i></b> </p>
 
@@ -126,6 +154,14 @@ class ResultWidget(QWidget):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
         self.text_edit.setTextCursor(cursor)
+        
+    def get_selected_title(self) -> str:
+        return self.title_combo.currentText()
+
+    def set_selected_title(self, title: str):
+        index = self.title_combo.findText(title)
+        if index >= 0:
+            self.title_combo.setCurrentIndex(index)
 
     def get_result_text(self) -> str:
         return self.text_edit.toPlainText().strip()

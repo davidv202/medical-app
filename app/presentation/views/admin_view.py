@@ -5,8 +5,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.widgets.report_title_management_widget import ReportTitleManagementWidget
 from app.presentation.widgets.user_management_widget import UserManagementWidget
 from app.presentation.widgets.pacs_management_widget import PacsManagementWidget
+from app.repositories.report_title_repository import ReportTitleRepository
 from app.services.notification_service import NotificationService
 from app.presentation.styles.style_manager import load_style
 
@@ -65,6 +67,11 @@ class AdminView(QWidget):
         self.pacs_widget.pacs_updated.connect(self._on_pacs_updated)
         self.admin_tabs.addTab(self.pacs_widget, "PACS URLs")
 
+        # Report Title tab
+        self.report_titles_widget = ReportTitleManagementWidget()
+        self.report_titles_widget.titles_updated.connect(self._on_report_titles_updated)
+        self.admin_tabs.addTab(self.report_titles_widget, "Report Titles")
+
         main_layout.addWidget(self.admin_tabs)
 
         # Shortcuts info
@@ -98,6 +105,8 @@ class AdminView(QWidget):
             self.user_widget.focus_search()
         elif current_index == 1:  # PACS tab
             self.pacs_widget.focus_search()
+        elif current_index == 2:
+            self.pacs_widget.focus_search() # Report Titles tab
 
     def _clear_current_search_if_focused(self):
         current_index = self.admin_tabs.currentIndex()
@@ -105,6 +114,8 @@ class AdminView(QWidget):
             self.user_widget.clear_search_if_focused()
         elif current_index == 1:  # PACS tab
             self.pacs_widget.clear_search_if_focused()
+        elif current_index == 2:
+            self.pacs_widget.focus_search() # Report Titles tab
 
     def _refresh_current_tab(self):
         current_index = self.admin_tabs.currentIndex()
@@ -112,6 +123,8 @@ class AdminView(QWidget):
             self.user_widget.refresh_data()
         elif current_index == 1:  # PACS tab
             self.pacs_widget.refresh_data()
+        elif current_index == 2:
+            self.pacs_widget.focus_search() # Report Titles tab
 
     def _edit_selected_current_tab(self):
         current_index = self.admin_tabs.currentIndex()
@@ -119,12 +132,17 @@ class AdminView(QWidget):
             self.user_widget.edit_selected()
         elif current_index == 1:  # PACS tab
             self.pacs_widget.edit_selected()
+        elif current_index == 2:
+            self.pacs_widget.focus_search() # Report Titles tab
 
     def _on_user_updated(self):
         print("User data updated")
 
     def _on_pacs_updated(self):
         print("PACS data updated")
+
+    def _on_report_titles_updated(self):
+        print("Report titles data updated")
 
     def _handle_logout(self):
         if self._auth_controller.logout(self):
