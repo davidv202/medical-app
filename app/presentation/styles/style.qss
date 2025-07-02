@@ -1,9 +1,4 @@
 /* ==========================================================================
-   MEDICAL PACS APPLICATION - MODERN DESIGN SYSTEM
-   Design consistent cu fundal mai închis pentru toată aplicația
-   ========================================================================== */
-
-/* ==========================================================================
    1. BASE STYLES - MODERN FOUNDATION
    ========================================================================== */
 
@@ -1671,6 +1666,12 @@ QProgressBar::chunk {
     margin: 2px;
 }
 
-/* ==========================================================================
-   END OF MODERN DESIGN SYSTEM
-   ========================================================================== */
+QToolBar * {
+   background: transparent;
+}
+
+QToolBar *:checked {
+   background: #e1effe !important;
+   color: #1e40af !important;
+   border: 1px solid #bfdbfe !important;
+}

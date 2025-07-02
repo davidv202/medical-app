@@ -3,7 +3,7 @@ import subprocess
 import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar,
-    QScrollArea, QSizePolicy, QSplitter, QTabWidget, QFrame
+    QScrollArea, QSizePolicy, QSplitter, QTabWidget, QFrame, QApplication
 )
 from PyQt6.QtCore import QThread, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -162,8 +162,8 @@ class EnhancedPacsView(QWidget):
         scroll_layout.addWidget(results_label)
 
         self.result_widget = ResultWidget()
-        self.result_widget.setMinimumHeight(200)
-        self.result_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.result_widget.setMinimumHeight(400)
+        self.result_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         scroll_layout.addWidget(self.result_widget)
 
         # PDF action buttons
