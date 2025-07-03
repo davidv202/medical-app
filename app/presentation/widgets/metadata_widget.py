@@ -226,7 +226,31 @@ class ResultWidget(QWidget):
             self.title_combo.setCurrentIndex(index)
 
     def get_result_text(self) -> str:
-        return self.text_edit.toPlainText().strip()
+        html_content = self.text_edit.toHtml()
+
+        body_match = re.search(r'<body[^>]*>(.*?)</body>', html_content, re.DOTALL)
+        if body_match:
+            content = body_match.group(1)
+        else:
+            content = html_content
+
+        content = re.sub(r'<p[^>]*>', '<p>', content)
+
+        content = re.sub(r'<span[^>]*font-weight:\s*(700|bold)[^>]*>(.*?)</span>', r'<strong>\2</strong>', content)
+
+        content = re.sub(r'<span[^>]*font-style:\s*italic[^>]*>(.*?)</span>', r'<em>\1</em>', content)
+
+        content = re.sub(r'<span[^>]*text-decoration:\s*underline[^>]*>(.*?)</span>', r'<u>\1</u>', content)
+
+        content = re.sub(r'<span[^>]*>', '', content)
+        content = re.sub(r'</span>', '', content)
+
+        content = re.sub(r'<p>\s*</p>', '', content)
+        content = re.sub(r'<p></p>', '', content)
+
+        content = re.sub(r'\s+', ' ', content)
+
+        return content.strip()
 
     def set_result_text(self, text: str):
         self.text_edit.setPlainText(text)

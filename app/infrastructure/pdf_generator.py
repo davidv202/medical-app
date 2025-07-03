@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from weasyprint import HTML, CSS
 from typing import Dict, Any
@@ -62,64 +63,192 @@ class PdfGenerator:
         return filtered_metadata
 
     def _build_html_content(self, content: str, patient_metadata: Dict[str, Any], generated_date: str,
-                            doctor_name: str = None, current_year: str = None) -> str:
+                            doctor_name: str = None, current_year: str = None, selected_title: str = None) -> str:
 
-        doctor_signature = ""
-        if doctor_name:
-            doctor_signature = f"""
-            <div class="doctor-signature-container">
-                <div class="doctor-signature-line"></div>
-                <div class="doctor-signature-text">
-                    <span class="doctor-name">{doctor_name}</span>
-                    <span class="doctor-title">Medic Radiolog</span>
-                </div>
-            </div>
-            """
+        # Extrage datele din metadata
+        patient_name = patient_metadata.get("Nume pacient", "")
+        cnp = patient_metadata.get("CNP", "")
+        dosar_nr = patient_metadata.get("Dosar nr.", "")
+        gamma_camera = patient_metadata.get("Model echipament", "")
+        investigation = patient_metadata.get("Tip examinare", "")
+        diagnosis = patient_metadata.get("Diagnostic de trimitere", "")
+        dose_mbq = patient_metadata.get("Doză administrată", "")
+        radiopharmaceutical = patient_metadata.get("Radiofarmaceutic", "")
+        exam_date = patient_metadata.get("Data examinării", "")
 
-        metadata_rows = ""
-        for key, value in patient_metadata.items():
-            metadata_rows += f'<tr><td class="label">{key}</td><td>{value}</td></tr>'
+        exam_title = selected_title if selected_title else "Scintigrama renală statică cu <sup>99m</sup>Tc- DMSA"
 
         return f"""
         <!DOCTYPE html>
         <html lang="ro">
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Rezultat Investigație Medicală</title>
+            <title>{exam_title}</title>
         </head>
-        <body data-generation-date="{generated_date}" data-current-year="{current_year}">
-            <div class="main-content">
-                <h1>Rezultat Investigație Medicală</h1>
-                <p class="generation-date">
-                    <strong>Document generat:</strong> {generated_date}
-                </p>
+        <body>
+            <div class="page-container">
+                <!-- PARTEA STÂNGĂ - IDENTICĂ CU IMAGINEA -->
+                <div class="left-panel">
+                    <div class="lab-title">
+                        <strong>Laborator<br>MEDICINA<br>NUCLEARĂ</strong>
+                    </div>
 
-                <div class="section">
-                    <h2>Informații despre Pacient și Investigație</h2>
-                    <table class="meta-table">
-                        {metadata_rows}
-                    </table>
-                </div>
+                    <div class="prof-name">
+                        <strong>Prof. dr.<br>Valeriu Rusu</strong>
+                    </div>
 
-                <div class="section">
-                    <h2>Rezultatul Investigației</h2>
-                    <div class="text-block">
-                        {self._format_content_for_html(content)}
+                    <div class="address">
+                        B-dul Independentei<br>
+                        nr. 1, etaj, cod 700111<br>
+                        tel./programări:<br>
+                        <strong>0232 240 822,<br>
+                        int.120</strong><br>
+                        sau <strong>0770 936 586</strong><br>
+                        e-mail:<br>
+                        <strong>laboratornucleara<br>
+                        @spitalspiridon.ro</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong>Sef laborator</strong><br>
+                        <strong>Prof. dr. Cipriana<br>
+                        STEFANESCU –</strong><br>
+                        medic primar<br>
+                        medicina nucleara si<br>
+                        endocrinologie
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Medici</u></strong><br>
+                        <strong>Ana Maria STATESCU</strong><br>
+                        – medic primar med.<br>
+                        nucl.<br>
+                        <strong>Irena GRIEROSU</strong><br>
+                        – sef lucr. dr., medic<br>
+                        primar med. nucl.<br>
+                        <strong>Cati-Raluca<br>
+                        STOLNICEANU</strong><br>
+                        – asist. univ. dr., medic<br>
+                        specialist med.nucl.<br>
+                        <strong>Wael JALLOUL</strong><br>
+                        – asist. univ. dr., medic<br>
+                        specialist med.nucl.
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Fizician</u></strong><br>
+                        <strong>Vlad GHIZDOVAT</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Medici rezidenti</u></strong><br>
+                        <strong>Laura PINTILIE<br>
+                        Radu CONSTANTIN<br>
+                        Larisa Elena RAU<br>
+                        Angela OARZA<br>
+                        Oana OLARIU<br>
+                        Raluca Rafaela ION<br>
+                        Ana Maria NISTOR<br>
+                        Sabina DEJMASU<br>
+                        Malina EPURE</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Asistenta sefa</u></strong><br>
+                        <strong>Alina TIMOFTI</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Asistenti</u></strong><br>
+                        <strong>Ofelia PERJU<br>
+                        Alina STEFAN<br>
+                        Monica PENISOARA<br>
+                        Otilia LISMAN<br>
+                        Laura VARZAR</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Personal auxiliar</u></strong><br>
+                        <strong>Irina ATASIEI<br>
+                        Genoveva SPATARU</strong>
+                    </div>
+
+                    <div class="section-header">
+                        <strong><u>Registrator medical</u></strong><br>
+                        <strong>Lupascu Adrian</strong>
                     </div>
                 </div>
-                {doctor_signature}
-            </div>
 
+                <!-- PARTEA DREAPTĂ - IDENTICĂ CU IMAGINEA -->
+                <div class="right-panel">
+                    <!-- SPAȚIU PENTRU ANTETUL SPITALULUI -->
+                    <div class="hospital-header-space">
+                        <!-- TU VEI PUNE AICI ANTETUL -->
+                    </div>
+
+                    <!-- DATELE PACIENTULUI -->
+                    <div class="patient-section">
+                        <div class="patient-data">
+                            <strong>Nume:</strong> {patient_name}<br>
+                            <strong>CNP:</strong> {cnp}<br>
+                            <strong>Dosar nr.:</strong> {dosar_nr}<br>
+                            <strong>Gamma camera:</strong> {gamma_camera}<br>
+                            <strong>Investigație la recomandarea:</strong><br>
+                            <strong>Diagnostic de trimitere:</strong> {diagnosis}<br>
+                            <strong>Doza:</strong> {dose_mbq} <strong>Radiofarmaceutic:</strong> <strong>{radiopharmaceutical}</strong>
+                        </div>
+
+                        <div class="exam-date-right">
+                            <strong>Data {exam_date}</strong>
+                        </div>
+                    </div>
+
+                    <!-- TITLUL EXAMINĂRII -->
+                    <div class="main-title">
+                        <h1>{exam_title}</h1>
+                    </div>
+
+                    <!-- CONȚINUTUL EXAMINĂRII -->
+                    <div class="examination-content">
+                        {self._format_content_for_html(content)}
+                    </div>
+
+                    <!-- SEMNĂTURILE -->
+                    <div class="signatures-section">
+                        <div class="signature-left-bottom">
+                            <strong>Sef laborator</strong><br>
+                            Medic primar Medicina Nucleara<br>
+                            <strong>Prof. dr. Cipriana STEFANESCU</strong>
+                        </div>
+
+                        <div class="signature-right-bottom">
+                            Medic specialist Medicina Nucleara<br>
+                            <strong>Asist. univ. Dr. Wael JALLOUL</strong>
+                        </div>
+                    </div>
+
+                    <div class="resident-signature-bottom">
+                        <strong>Medic rezident Medicina Nucleara</strong>
+                    </div>
+                </div>
+            </div>
         </body>
         </html>
         """
 
     def _format_content_for_html(self, content: str) -> str:
         if not content.strip():
-            return "<em style='color: #94a3b8; font-size: 11px; font-style: italic;'>Nu a fost introdus niciun rezultat al investigației.</em>"
+            return "<p><em style='color: #94a3b8; font-size: 11px; font-style: italic;'>Nu a fost introdus niciun rezultat al investigației.</em></p>"
 
-        content = content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        # Dacă conținutul vine deja formatat ca HTML, procesează-l minimal
+        if '<p>' in content or '<strong>' in content or '<em>' in content:
+            # Doar asigură-te că paragrafele au stilul corect
+            content = re.sub(r'<p>', '<p style="margin: 12px 0; line-height: 1.5;">', content)
+            return content
+
+        # Altfel, procesează ca text normal
+        import html
+        content = html.escape(content)
 
         paragraphs = content.split('\n\n')
         formatted_paragraphs = []
@@ -127,6 +256,7 @@ class PdfGenerator:
         for paragraph in paragraphs:
             if paragraph.strip():
                 paragraph = paragraph.replace('\n', '<br>')
-                formatted_paragraphs.append(f'<p>{paragraph}</p>')
+                formatted_paragraphs.append(f'<p style="margin: 12px 0; line-height: 1.5;">{paragraph}</p>')
 
-        return ''.join(formatted_paragraphs) if formatted_paragraphs else f'<p>{content}</p>'
+        return ''.join(
+            formatted_paragraphs) if formatted_paragraphs else f'<p style="margin: 12px 0; line-height: 1.5;">{content}</p>'

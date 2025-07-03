@@ -356,16 +356,82 @@ def add_default_report_titles(session):
 
     report_titles = [
         ReportTitle(
-            title_text="REZULTAT INVESTIGAȚIE MEDICALĂ"
+            title_text="Scintigrama renala statica cu 99mTc- DMSA"
         ),
         ReportTitle(
-            title_text="RAPORT MEDICAL IMAGISTIC"
+            title_text="Scintigrama renala dinamica cu 99mTc- DTPA"
         ),
         ReportTitle(
-            title_text="RAPORT RADIOLOGIC"
+            title_text="Scintigrama renala dinamica cu 99mTc- MAG3"
         ),
         ReportTitle(
-            title_text="REZULTAT ECOGRAFIE"
+            title_text="Scintigrama tiroidiana cu 99mTcO4"
+        ),
+        ReportTitle(
+            title_text= "Scintigrama tiroidiana cu 131INa"
+        ),
+        ReportTitle(
+            title_text="Scintigrama tiroidiana cu 99mTc + FID-MIBI"
+        ),
+        ReportTitle(
+            title_text="Scintigrama osoasa cu 99mTc – HDP"
+        ),
+        ReportTitle(
+            title_text="Scintigrama paratiroidiana cu 99mTc-FID-MIBI"
+        ),
+        ReportTitle(
+            title_text="Scintigrama miocardica cu 99mTc- FID-MIBI cu test la efort si de repaus"
+        ),
+        ReportTitle(
+            title_text="Scintigrama miocardica cu 99mTc- FID-MIBI cu test la efort "
+        ),
+        ReportTitle(
+            title_text="Scintigrama miocardica cu 99mTc- FID-MIBI de repaus"
+        ),
+        ReportTitle(
+            title_text="Scintigrama pulmonara cu 99mTc- MAASOL"
+        ),
+        ReportTitle(
+            title_text="Scintigrama tumorala cu 99mTc +Tektrotyd"
+        ),
+        ReportTitle(
+            title_text="Scintigrama Corp Intreg cu 99mTc-FID-MIBI"
+        ),
+        ReportTitle(
+            title_text="Diverticul  Meckel"
+        ),
+        ReportTitle(
+            title_text="Scintigrama ganglion santinela cu 99mTc – NANOSCAN"
+        ),
+        ReportTitle(
+            title_text="Scintigrama ganglion santinela cu 99mTc - NANOHSA"
+        ),
+        ReportTitle(
+            title_text="Scintigrama de orbita cu 99mTc - DTPA"
+        ),
+        ReportTitle(
+            title_text="Limfoscintigrafie cu 99mTc – NANOSCAN"
+        ),
+        ReportTitle(
+            title_text="Limfoscintigrafie cu 99mTc – NANOHSA"
+        ),
+        ReportTitle(
+            title_text="Scintigrama hepatica cu 99mTc + NANOSCAN "
+        ),
+        ReportTitle(
+            title_text="Scintigrama hepatica cu 99mTc + NANOHSA"
+        ),
+        ReportTitle(
+            title_text="Scintigrama hematii marcate cu 99mTc + PYP"
+        ),
+        ReportTitle(
+            title_text="Scintigrama timica cu 99mTc-FID-MIBI"
+        ),
+        ReportTitle(
+            title_text="Scintigrama Corp Intreg cu 131INa"
+        ),
+        ReportTitle(
+            title_text="Scintigrama evacuare gastrica cu 99mTc-DTPA"
         )
     ]
 

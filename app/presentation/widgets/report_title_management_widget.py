@@ -122,6 +122,7 @@ class ReportTitleManagementWidget(QWidget):
         self.title_text_input.setObjectName("UsernameInput")
         self.title_text_input.setPlaceholderText("ex: REZULTAT INVESTIGAȚIE MEDICALĂ")
         self.title_text_input.setMaxLength(255)
+        self.title_text_input.editingFinished.connect(self._on_enter_pressed)
 
         form_layout.addRow("Titlu:", self.title_text_input)
 
@@ -149,6 +150,11 @@ class ReportTitleManagementWidget(QWidget):
         layout.addLayout(title_form_buttons_layout)
 
         return widget
+
+    def _on_enter_pressed(self):
+        print(f"Enter pressed! Input has focus: {self.title_text_input.hasFocus()}")
+        print(f"Input text: '{self.title_text_input.text()}'")
+        self._handle_create_or_update_title()
 
     def refresh_data(self):
         self._load_titles()
@@ -292,21 +298,23 @@ class ReportTitleManagementWidget(QWidget):
 
         if not title_text:
             self._notification_service.show_warning(self, "Eroare validare", "Titlul nu poate fi gol.")
+            self.title_text_input.setFocus()
             return
 
         if len(title_text) > 255:
             self._notification_service.show_warning(self, "Eroare validare",
                                                     "Titlul trebuie să aibă mai puțin de 255 caractere.")
+            self.title_text_input.setFocus()
             return
 
         try:
             report_title_service = Container.get_report_title_service()
             report_title_service.create_title(title_text)
 
-            self._notification_service.show_info(self, "Succes", f"Titlul '{title_text}' a fost creat cu succes.")
             self._clear_title_form()
             self._load_titles()
             self.titles_updated.emit()
+            self.title_text_input.setFocus()
 
         except ValueError as e:
             self._notification_service.show_warning(self, "Eroare", str(e))
@@ -318,18 +326,19 @@ class ReportTitleManagementWidget(QWidget):
 
         if not title_text:
             self._notification_service.show_warning(self, "Eroare validare", "Titlul nu poate fi gol.")
+            self.title_text_input.setFocus()
             return
 
         if len(title_text) > 255:
             self._notification_service.show_warning(self, "Eroare validare",
                                                     "Titlul trebuie să aibă mai puțin de 255 caractere.")
+            self.title_text_input.setFocus()
             return
 
         try:
             report_title_service = Container.get_report_title_service()
             report_title_service.update_title(self._editing_title_id, title_text)
 
-            self._notification_service.show_info(self, "Succes", f"Titlul a fost actualizat cu succes.")
             self._cancel_title_edit()
             self._load_titles()
             self.titles_updated.emit()
@@ -351,8 +360,6 @@ class ReportTitleManagementWidget(QWidget):
                 try:
                     report_title_service = Container.get_report_title_service()
                     report_title_service.delete_title(title_id)
-
-                    self._notification_service.show_info(self, "Succes", "Titlu sters cu succes.")
 
                     # If editing this title, cancel edit mode
                     if self._editing_mode and self._editing_title_id == title_id:

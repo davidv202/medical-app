@@ -1,381 +1,154 @@
 @page {
-	size: A4;
-	margin: 2cm 1.5cm 3.5cm 1.5cm;
-
-	/* Header for each page */
-	@top-center {
-		content: "REZULTAT INVESTIGAȚIE MEDICALĂ";
-		font-size: 10px;
-		color: #1e40af;
-		font-family: "DejaVu Sans", Arial, sans-serif;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		border-bottom: 1px solid #e2e8f0;
-		padding-bottom: 5px;
-		margin-bottom: 10px;
-	}
-
-	/* Footer for each page */
-	@bottom-left {
-		font-size: 8px;
-		color: #64748b;
-		font-family: "DejaVu Sans", Arial, sans-serif;
-		font-weight: 500;
-		padding-top: 8px;
-		border-top: 1px solid #e2e8f0;
-	}
-
-	@bottom-center {
-		content: "DOCUMENT MEDICAL CONFIDENȚIAL";
-		font-size: 8px;
-		color: #1e40af;
-		font-family: "DejaVu Sans", Arial, sans-serif;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.8px;
-		padding-top: 8px;
-		border-top: 1px solid #e2e8f0;
-	}
-
-	@bottom-right {
-		content: "Pagina " counter(page) " din " counter(pages);
-		font-size: 8px;
-		color: #64748b;
-		font-family: "DejaVu Sans", Arial, sans-serif;
-		font-weight: 500;
-		padding-top: 8px;
-		border-top: 1px solid #e2e8f0;
-	}
+    size: A4;
+    margin: 0.8cm 0.5cm 0.8cm 0.5cm;
 }
 
-/* Base typography and layout */
 body {
-	font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif;
-	font-size: 13px;
-	line-height: 1.6;
-	color: #2c3e50;
-	margin: 0;
-	padding: 0;
-	background: white;
-	text-align: justify;
+    font-family: "Arial", sans-serif;
+    font-size: 10px;
+    line-height: 1.1;
+    color: #000000;
+    margin: 0;
+    padding: 0;
 }
 
-/* Main content container */
-.main-content {
-	min-height: calc(100vh - 7cm);
-	padding: 20px 0;
+.page-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
 }
 
-/* Main heading */
-h1 {
-	font-size: 22px;
-	font-weight: bold;
-	text-align: center;
-	color: #1e40af;
-	margin: 0 0 25px 0;
-	padding: 18px 0;
-	border-bottom: 3px solid #e0e7ff;
-	text-transform: uppercase;
-	letter-spacing: 1.2px;
-	background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-	border-radius: 8px;
+/* PARTEA STÂNGĂ - EXACT CA ÎN IMAGINE */
+.left-panel {
+    width: 180px;
+    background-color: #f0f0f0;
+    border-right: 2px solid #000;
+    padding: 8px;
+    font-size: 9px;
+    line-height: 1.0;
+    text-align: center;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* Section headings */
-h2 {
-	font-size: 15px;
-	font-weight: bold;
-	color: #2c3e50;
-	margin: 25px 0 15px 0;
-	padding: 10px 0 10px 15px;
-	background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
-	border-left: 5px solid #1e40af;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	border-radius: 0 8px 8px 0;
-	page-break-after: avoid;
+.lab-title {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
 }
 
-/* Generation date styling */
-.generation-date {
-	text-align: right;
-	font-size: 11px;
-	color: #6c757d;
-	margin: 0 0 20px 0;
-	font-style: italic;
-	font-weight: 500;
+.prof-name {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
 }
 
-/* Section containers */
-.section {
-	margin: 20px 0;
-	page-break-inside: avoid;
+.address {
+    font-size: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+    line-height: 1.1;
 }
 
-/* Patient metadata table styling */
-.meta-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin: 12px 0 20px 0;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-	background: white;
-	border: 2px solid #e2e8f0;
-	border-radius: 8px;
-	overflow: hidden;
-	page-break-inside: avoid;
-	font-size: 12px;
+.section-header {
+    font-size: 8px;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1.0;
 }
 
-.meta-table td {
-	padding: 12px 16px;
-	border-bottom: 1px solid #f1f5f9;
-	vertical-align: middle;
-	text-align: left;
-	line-height: 1.4;
+/* PARTEA DREAPTĂ - EXACT CA ÎN IMAGINE */
+.right-panel {
+    flex: 1;
+    padding: 10px 15px;
+    position: relative;
+    height: 100vh;
 }
 
-.meta-table td.label {
-	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-	font-weight: 700;
-	color: #1e40af;
-	width: 35%;
-	font-size: 11px;
-	letter-spacing: 0.3px;
-	text-align: left;
-	vertical-align: middle;
-	text-transform: uppercase;
-	border-right: 1px solid #bfdbfe;
+.hospital-header-space {
+    height: 80px;
+    border: 1px dashed #999;
+    margin-bottom: 15px;
+    /* AICI VEI PUNE ANTETUL */
 }
 
-.meta-table td:not(.label) {
-	background: white;
-	color: #2c3e50;
-	font-weight: 600;
-	text-align: left;
-	vertical-align: middle;
-	font-size: 12px;
+.patient-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 10px;
 }
 
-/* Remove border from last row */
-.meta-table tr:last-child td {
-	border-bottom: none;
+.patient-data {
+    flex: 1;
+    line-height: 1.2;
 }
 
-/* Results text block styling */
-.text-block {
-	background: #ffffff;
-	border: 2px solid #e0f2fe;
-	border-radius: 8px;
-	padding: 20px;
-	margin: 15px 0;
-	white-space: pre-wrap;
-	line-height: 1.7;
-	font-size: 13px;
-	color: #2c3e50;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-	min-height: 80px;
-	page-break-inside: avoid;
+.exam-date-right {
+    text-align: right;
+    font-weight: bold;
+    margin-right: 30px;
 }
 
-/* Information block for patient guidance */
-.info-block {
-	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-	border: 2px solid #f59e0b;
-	border-radius: 8px;
-	padding: 18px;
-	margin: 15px 0;
-	font-size: 12px;
-	color: #92400e;
-	line-height: 1.6;
-	page-break-inside: avoid;
+.main-title {
+    text-align: center;
+    margin: 25px 0;
 }
 
-.info-block p {
-	margin: 8px 0;
-	font-weight: 600;
+.main-title h1 {
+    font-size: 15px;
+    font-weight: bold;
+    margin: 0;
+    text-decoration: underline;
 }
 
-.info-block p:first-child {
-	margin-top: 0;
+.examination-content {
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 30px 0;
+    min-height: 300px;
 }
 
-.info-block p:last-child {
-	margin-bottom: 0;
+.examination-content p {
+    margin: 15px 0;
 }
 
-/* Doctor signature styling */
-.doctor-signature-container {
-	margin-top: 60px;
-	margin-bottom: 40px;
-	text-align: right;
-	page-break-inside: avoid;
-	position: relative;
+/* SEMNĂTURILE - POZIȚIONATE ABSOLUT LA FUND */
+.signatures-section {
+    position: absolute;
+    bottom: 80px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
 }
 
-.doctor-signature-line {
-	width: 220px;
-	height: 2px;
-	background: linear-gradient(
-		to right,
-		transparent 0%,
-		#1e40af 20%,
-		#1e40af 80%,
-		transparent 100%
-	);
-	margin: 0 0 15px auto;
-	opacity: 0.8;
-	border-radius: 1px;
+.signature-left-bottom, .signature-right-bottom {
+    text-align: center;
+    width: 45%;
+    line-height: 1.2;
 }
 
-.doctor-signature-text {
-	font-size: 12px;
-	color: #475569;
-	line-height: 1.5;
-	font-style: italic;
-	margin-right: 15px;
+.resident-signature-bottom {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
 }
 
-.doctor-name {
-	display: block;
-	font-weight: 700;
-	color: #1e40af;
-	font-size: 14px;
-	margin-bottom: 5px;
-	font-style: normal;
-	letter-spacing: 0.4px;
-	text-transform: uppercase;
+/* INDICI */
+sup {
+    font-size: 8px;
+    vertical-align: super;
 }
 
-.doctor-title {
-	display: block;
-	font-size: 10px;
-	color: #64748b;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	opacity: 0.9;
-	font-weight: 600;
-}
-
-/* Enhanced typography for medical context */
-strong,
-b {
-	font-weight: 700;
-	color: #1e40af;
-}
-
-em,
-i {
-	font-style: italic;
-	color: #64748b;
-}
-
-/* Text formatting in results */
-.text-block p {
-	margin: 0 0 15px 0;
-	text-indent: 0;
-}
-
-.text-block p:last-child {
-	margin-bottom: 0;
-}
-
-.text-block p:first-child {
-	margin-top: 0;
-}
-
-/* Patient-friendly indicators */
-.meta-table td.label::before {
-	content: "▶ ";
-	color: #1e40af;
-	font-weight: bold;
-	font-size: 10px;
-	opacity: 0.8;
-	margin-right: 4px;
-}
-
-/* Print-specific adjustments */
 @media print {
-	body {
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
-	}
-
-	.section {
-		page-break-inside: avoid;
-		orphans: 3;
-		widows: 3;
-	}
-
-	h1,
-	h2 {
-		page-break-after: avoid;
-		orphans: 3;
-		widows: 3;
-	}
-
-	.meta-table {
-		page-break-inside: avoid;
-	}
-
-	.doctor-signature-container {
-		page-break-inside: avoid;
-		margin-bottom: 40px;
-	}
-
-	.text-block,
-	.info-block {
-		page-break-inside: avoid;
-		orphans: 4;
-		widows: 4;
-	}
-
-	/* Ensure footer space */
-	@page {
-		margin-bottom: 4cm;
-	}
-}
-
-/* Document watermark for authenticity */
-body::before {
-	content: "";
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-image: radial-gradient(
-			circle at 25% 25%,
-			rgba(30, 64, 175, 0.02) 0%,
-			transparent 50%
-		),
-		radial-gradient(
-			circle at 75% 75%,
-			rgba(30, 64, 175, 0.02) 0%,
-			transparent 50%
-		);
-	z-index: -1;
-	pointer-events: none;
-}
-
-/* Accessibility improvements */
-@media {
-	body {
-		color: #000000;
-	}
-
-	h1,
-	h2 {
-		color: #000080;
-	}
-
-	.meta-table td.label {
-		background: #f0f0f0;
-		color: #000000;
-	}
-
-	.info-block {
-		background: #fff3cd;
-		color: #000000;
-	}
+    body { -webkit-print-color-adjust: exact; }
+    .page-container { height: 100vh !important; }
+    .left-panel, .right-panel { height: 100vh !important; }
 }
