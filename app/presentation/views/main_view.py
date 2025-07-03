@@ -3,12 +3,13 @@ from PyQt6.QtWidgets import (
 )
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.hybrid_pacs_controller import HybridPacsController
+from app.presentation.views.base_view import CenteredView
 from app.presentation.views.enhanced_pacs_view import EnhancedPacsView
 from app.presentation.views.patients_view import PatientsView
 from app.presentation.styles.style_manager import load_style
 
 
-class MainView(QWidget):
+class MainView(CenteredView):
 
     def __init__(self, auth_controller: AuthController, pacs_controller: HybridPacsController):
         super().__init__()

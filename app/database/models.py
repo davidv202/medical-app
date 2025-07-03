@@ -17,6 +17,7 @@ class User(Base):
     role = Column(Enum(RoleEnum), nullable=False)
     last_name = Column(String(255), nullable=False)
     first_name = Column(String(255), nullable=False)
+    title = Column(String(100), nullable=True)
 
 class PacsUrl(Base):
     __tablename__ = "pacs_urls"

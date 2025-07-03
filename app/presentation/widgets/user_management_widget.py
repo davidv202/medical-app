@@ -77,10 +77,9 @@ class UserManagementWidget(QWidget):
         self.user_results_label.setStyleSheet("color: #6b7280; font-size: 11px; padding: 2px;")
         layout.addWidget(self.user_results_label)
 
-        # Users table
         self.users_table = QTableWidget()
-        self.users_table.setColumnCount(4)
-        self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Nume Complet", "Rol"])
+        self.users_table.setColumnCount(5)  # Added column for title
+        self.users_table.setHorizontalHeaderLabels(["ID", "Username", "Titulatura", "Nume Complet", "Rol"])
         self.users_table.verticalHeader().setVisible(False)
         self.users_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.users_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -133,6 +132,11 @@ class UserManagementWidget(QWidget):
         self.last_name_input.setObjectName("UsernameInput")
         self.last_name_input.setPlaceholderText("Introdu numele de familie")
 
+        # New title input field
+        self.title_input = QLineEdit()
+        self.title_input.setObjectName("UsernameInput")
+        self.title_input.setPlaceholderText("Dr., Univ. Dr., Prof. Dr., etc. (opțional)")
+
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setObjectName("PasswordInput")
@@ -146,9 +150,13 @@ class UserManagementWidget(QWidget):
         self.role_input = QComboBox()
         self.role_input.addItems([role.value for role in UserRole])
 
+        # Connect role change to title field visibility
+        self.role_input.currentTextChanged.connect(self._on_role_changed)
+
         form_layout.addRow("Username:", self.username_input)
         form_layout.addRow("Prenume:", self.first_name_input)
         form_layout.addRow("Nume familie:", self.last_name_input)
+        form_layout.addRow("Titulatura:", self.title_input)  # New title field
         form_layout.addRow("Parola:", self.password_input)
         form_layout.addRow("Confirma parola:", self.confirm_password_input)
         form_layout.addRow("Rol:", self.role_input)
@@ -177,7 +185,20 @@ class UserManagementWidget(QWidget):
         layout.addLayout(form_buttons_layout)
         layout.addStretch()
 
+        # Set initial title field state
+        self._on_role_changed(self.role_input.currentText())
+
         return widget
+
+    def _on_role_changed(self, role_text: str):
+        """Enable/disable title field based on role selection"""
+        is_doctor = role_text == "doctor"
+        self.title_input.setEnabled(is_doctor)
+        if not is_doctor:
+            self.title_input.clear()
+            self.title_input.setPlaceholderText("(doar pentru doctori)")
+        else:
+            self.title_input.setPlaceholderText("Dr., Univ. Dr., Prof. Dr., etc. (opțional)")
 
     def refresh_data(self):
         self._load_users()
@@ -203,19 +224,26 @@ class UserManagementWidget(QWidget):
                 self.users_table.setItem(row, 0, QTableWidgetItem(str(user.id)))
                 self.users_table.setItem(row, 1, QTableWidgetItem(user.username))
 
+                # Title column
+                title_text = user.title if user.title else ""
+                self.users_table.setItem(row, 2, QTableWidgetItem(title_text))
+
+                # Full name column
                 full_name = ""
                 if user.first_name or user.last_name:
                     full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-                self.users_table.setItem(row, 2, QTableWidgetItem(full_name))
+                self.users_table.setItem(row, 3, QTableWidgetItem(full_name))
 
-                self.users_table.setItem(row, 3, QTableWidgetItem(user.role.value.title()))
+                # Role column
+                self.users_table.setItem(row, 4, QTableWidgetItem(user.role.value.title()))
 
             # Adjust column widths
             header = self.users_table.horizontalHeader()
-            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-            header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # Username
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Title
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)  # Full Name
+            header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Role
 
             self._clear_user_search()
 
@@ -235,12 +263,14 @@ class UserManagementWidget(QWidget):
 
         for row in range(total_count):
             username_item = self.users_table.item(row, 1)
-            fullname_item = self.users_table.item(row, 2)
+            fullname_item = self.users_table.item(row, 3)
+            title_item = self.users_table.item(row, 2)
 
             username_match = text.lower() in username_item.text().lower() if username_item else False
             fullname_match = text.lower() in fullname_item.text().lower() if fullname_item else False
+            title_match = text.lower() in title_item.text().lower() if title_item else False
 
-            if username_match or fullname_match:
+            if username_match or fullname_match or title_match:
                 self.users_table.setRowHidden(row, False)
                 visible_count += 1
             else:
@@ -293,6 +323,7 @@ class UserManagementWidget(QWidget):
             self.username_input.setText(user.username)
             self.first_name_input.setText(user.first_name or "")
             self.last_name_input.setText(user.last_name or "")
+            self.title_input.setText(user.title or "")  # Set title field
             self.password_input.clear()
             self.confirm_password_input.clear()
 
@@ -302,6 +333,9 @@ class UserManagementWidget(QWidget):
                     role_index = i
                     break
             self.role_input.setCurrentIndex(role_index)
+
+            # Update title field state based on role
+            self._on_role_changed(user.role.value)
 
             self._editing_mode = True
             self._editing_user_id = user_id
@@ -341,6 +375,7 @@ class UserManagementWidget(QWidget):
         username = self.username_input.text().strip()
         first_name = self.first_name_input.text().strip()
         last_name = self.last_name_input.text().strip()
+        title = self.title_input.text().strip()
         password = self.password_input.text().strip()
         confirm_password = self.confirm_password_input.text().strip()
         role_value = self.role_input.currentText()
@@ -361,6 +396,13 @@ class UserManagementWidget(QWidget):
             last_name_error = Validators.validate_name(last_name, "Numele de familie")
             if last_name_error:
                 self._notification_service.show_warning(self, "Validation Error", last_name_error)
+                return
+
+        # Validate title for doctors
+        if role_value == "doctor" and title:
+            if len(title) > 100:
+                self._notification_service.show_warning(self, "Validation Error",
+                                                        "Titulatura trebuie să aibă mai puțin de 100 caractere")
                 return
 
         password_error = Validators.validate_password(password)
@@ -385,12 +427,15 @@ class UserManagementWidget(QWidget):
                 password=hashed_password,
                 role=role,
                 first_name=first_name if first_name else None,
-                last_name=last_name if last_name else None
+                last_name=last_name if last_name else None,
+                title=title if title and role == UserRole.DOCTOR else None  # Only set title for doctors
             )
 
             user_repo.create(new_user)
 
-            self._notification_service.show_info(self, "Succes", f"Utilizatorul '{username}' a fost creat cu succes.")
+            display_name = new_user.get_full_name_with_title() if new_user.title else f"{username}"
+            self._notification_service.show_info(self, "Succes",
+                                                 f"Utilizatorul '{display_name}' a fost creat cu succes.")
             self._clear_form()
             self._load_users()
             self.user_updated.emit()
@@ -402,6 +447,7 @@ class UserManagementWidget(QWidget):
         username = self.username_input.text().strip()
         first_name = self.first_name_input.text().strip()
         last_name = self.last_name_input.text().strip()
+        title = self.title_input.text().strip()
         password = self.password_input.text().strip()
         confirm_password = self.confirm_password_input.text().strip()
         role_value = self.role_input.currentText()
@@ -422,6 +468,13 @@ class UserManagementWidget(QWidget):
             last_name_error = Validators.validate_name(last_name, "Numele de familie")
             if last_name_error:
                 self._notification_service.show_warning(self, "Validation Error", last_name_error)
+                return
+
+        # Validate title for doctors
+        if role_value == "doctor" and title:
+            if len(title) > 100:
+                self._notification_service.show_warning(self, "Validation Error",
+                                                        "Titulatura trebuie să aibă mai puțin de 100 caractere")
                 return
 
         if password:
@@ -462,13 +515,15 @@ class UserManagementWidget(QWidget):
                 password=hashed_password,
                 role=role,
                 first_name=first_name if first_name else None,
-                last_name=last_name if last_name else None
+                last_name=last_name if last_name else None,
+                title=title if title and role == UserRole.DOCTOR else None  # Only set title for doctors
             )
 
             user_repo.update(updated_user)
 
+            display_name = updated_user.get_full_name_with_title() if updated_user.title else f"{username}"
             self._notification_service.show_info(self, "Succes",
-                                                 f"Utilizatorul '{username}' a fost actualizat cu succes.")
+                                                 f"Utilizatorul '{display_name}' a fost actualizat cu succes.")
 
             self._cancel_edit()
             self._load_users()
@@ -483,14 +538,20 @@ class UserManagementWidget(QWidget):
         if current_row >= 0:
             user_id = int(self.users_table.item(current_row, 0).text())
             username = self.users_table.item(current_row, 1).text()
+            title = self.users_table.item(current_row, 2).text()
+            full_name = self.users_table.item(current_row, 3).text()
 
             current_user = self._auth_controller.get_current_user()
             if current_user and current_user.id == user_id:
                 self._notification_service.show_warning(self, "Atentie", "Nu poti sa iti stergi propriu cont.")
                 return
 
+            display_name = f"{title} {full_name}".strip() if title else full_name
+            if not display_name:
+                display_name = username
+
             if self._notification_service.ask_confirmation(
-                    self, "Confirm Delete", f"Esti sigur ca vrei sa stergi utilizatorul '{username}'?"
+                    self, "Confirm Delete", f"Esti sigur ca vrei sa stergi utilizatorul '{display_name}'?"
             ):
                 try:
                     user_repo = Container.get_user_repository()
@@ -513,9 +574,11 @@ class UserManagementWidget(QWidget):
         self.username_input.clear()
         self.first_name_input.clear()
         self.last_name_input.clear()
+        self.title_input.clear()
         self.password_input.clear()
         self.confirm_password_input.clear()
         self.role_input.setCurrentIndex(0)
+        self._on_role_changed(self.role_input.currentText())
 
         if not self._editing_mode:
             self.username_input.setFocus()

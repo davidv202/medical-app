@@ -5,10 +5,11 @@ from PyQt6.QtWidgets import (
 from app.presentation.controllers.auth_controller import AuthController
 from app.core.entities.user import UserRole
 from app.presentation.styles.style_manager import load_style
+from app.presentation.views.base_view import CenteredView
 from app.services.notification_service import NotificationService
 
 
-class LoginView(QWidget):
+class LoginView(CenteredView):
     def __init__(self, auth_controller: AuthController):
         super().__init__()
         self._auth_controller = auth_controller

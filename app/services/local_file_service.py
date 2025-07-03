@@ -400,6 +400,9 @@ class LocalFileService(ILocalFileService):
                 "Patient Age": str(getattr(dataset, 'PatientAge', 'N/A')),
                 "Study Date": self._format_date(getattr(dataset, 'StudyDate', '')),
                 "Study Instance UID": str(getattr(dataset, 'StudyInstanceUID', 'N/A')),
+                "Accession Number": str(getattr(dataset, 'AccessionNumber', 'N/A')),
+                "Referring Physician Name": str(getattr(dataset, 'ReferringPhysicianName', 'N/A')),
+                "Radiopharmaceutic"
                 "Description": str(getattr(dataset, 'StudyDescription', 'Local DICOM Study')),
                 "Series Status": "LOCAL",
                 "Source": "Local File"

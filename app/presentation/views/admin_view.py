@@ -5,15 +5,15 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.views.base_view import CenteredView
 from app.presentation.widgets.report_title_management_widget import ReportTitleManagementWidget
 from app.presentation.widgets.user_management_widget import UserManagementWidget
 from app.presentation.widgets.pacs_management_widget import PacsManagementWidget
-from app.repositories.report_title_repository import ReportTitleRepository
 from app.services.notification_service import NotificationService
 from app.presentation.styles.style_manager import load_style
 
 
-class AdminView(QWidget):
+class AdminView(CenteredView):
     def __init__(self, auth_controller: AuthController):
         super().__init__()
         self._auth_controller = auth_controller

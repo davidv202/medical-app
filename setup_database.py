@@ -27,21 +27,18 @@ missing_deps = []
 
 try:
     import sqlalchemy
-
     print("✅ SQLAlchemy găsit")
 except ImportError:
     missing_deps.append("sqlalchemy")
 
 try:
     import pymysql
-
     print("✅ PyMySQL găsit")
 except ImportError:
     missing_deps.append("pymysql")
 
 try:
     import bcrypt
-
     print("✅ bcrypt găsit")
 except ImportError:
     missing_deps.append("bcrypt")
@@ -56,7 +53,6 @@ if missing_deps:
 try:
     from app.database.models import Base, User, PacsUrl, AppSettings, ReportTitle, RoleEnum
     from app.config.settings import Settings
-
     print("✅ Module aplicație încărcate")
 except ImportError as e:
     print(f"❌ Nu pot încărca modulele aplicației: {e}")
@@ -110,7 +106,7 @@ def main():
     print(f"📊 Conectare la: {db_uri}")
 
     # Confirmă inițializarea
-    response = input("\nVrei să continui cu inițializarea bazei de date? (y/N): ")
+    response = input("\nVrei să continui cu inițializarea bazei de date? ACEST PROCES VA ȘTERGE DATELE EXISTENTE! (y/N): ")
     if response.lower() not in ['y', 'yes', 'da']:
         print("❌ Inițializare anulată.")
         return
@@ -136,10 +132,18 @@ def main():
             }
         )
 
+        # ȘTERGE tabelele existente pentru a le recrea cu structura nouă
+        print("🗑️ Ștergere tabele existente...")
+        try:
+            Base.metadata.drop_all(engine)
+            print("✅ Tabele existente șterse!")
+        except Exception as e:
+            print(f"⚠️ Nu s-au putut șterge tabelele existente (probabil nu existau): {e}")
+
         # Creează tabelele
-        print("📋 Creare tabele...")
+        print("📋 Creare tabele noi...")
         Base.metadata.create_all(engine)
-        print("✅ Tabele create!")
+        print("✅ Tabele create cu structura nouă!")
 
         # Adaugă datele default
         Session = sessionmaker(bind=engine)
@@ -165,19 +169,17 @@ def main():
         print("\n🎉 INIȚIALIZARE COMPLETĂ!")
         print("-" * 30)
         print("Tabele create:")
-        print("  📊 users - Utilizatori aplicație")
+        print("  📊 users - Utilizatori aplicație (cu titulatura)")
         print("  🏥 pacs_urls - Configurații PACS")
         print("  ⚙️ app_settings - Setări aplicație")
         print("  📄 report_titles - Titluri rapoarte")
         print("\nConturi utilizator:")
-        print("  👤 admin / admin123")
-        print("  👤 doctor / doctor123")
-        print("  👤 radiolog / doctor123")
+        print("  👤 admin / admin123 (Administrator)")
+        print("  👤 dr.popescu / doctor123 (Dr. Ioan Popescu)")
+        print("  👤 univ.dr.georgescu / radiolog123 (Univ. Dr. Alexandru Georgescu)")
         print("\nTitluri rapoarte default:")
-        print("  📋 REZULTAT INVESTIGAȚIE MEDICALĂ")
-        print("  📋 RAPORT MEDICAL IMAGISTIC")
-        print("  📋 RAPORT RADIOLOGIC")
-        print("  📋 REZULTAT ECOGRAFIE")
+        print("  📋 Scintigrame specializate medicale")
+        print("  📋 Investigații nucleare complete")
         print("\n⚠️  Schimbă parolele după prima autentificare!")
         print("\n🚀 Acum poți rula aplicația cu: python app/main.py")
 
@@ -226,18 +228,14 @@ def create_database_if_needed(db_uri):
 
 
 def add_default_users(session):
-    """Adaugă utilizatori default pentru aplicație"""
+    """Adaugă utilizatori default pentru aplicație cu titulatura"""
 
-    # Verifică dacă există deja utilizatori
-    if session.query(User).count() > 0:
-        print("👤 Utilizatori există deja, se omite...")
-        return
-
-    print("👤 Creare utilizatori default...")
+    print("👤 Creare utilizatori default cu titulatura...")
 
     # Hash-urile pentru parole
-    admin_hash = bcrypt.hashpw("admin".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    doctor_hash = bcrypt.hashpw("doctor".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    admin_hash = bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    doctor1_hash = bcrypt.hashpw("doctor123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    doctor2_hash = bcrypt.hashpw("radiolog123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     users = [
         User(
@@ -245,35 +243,37 @@ def add_default_users(session):
             password=admin_hash,
             role=RoleEnum.admin,
             first_name="Administrator",
-            last_name="System"
+            last_name="System",
+            title=None
         ),
         User(
-            username="doctor",
-            password=doctor_hash,
+            username="dr.popescu",
+            password=doctor1_hash,
             role=RoleEnum.doctor,
-            first_name="Doctor",
-            last_name="Demo"
+            first_name="Ioan",
+            last_name="Popescu",
+            title="Dr."  # Doctor cu titulatura
         ),
         User(
-            username="radiolog",
-            password=doctor_hash,
+            username="univ.dr.georgescu",
+            password=doctor2_hash,
             role=RoleEnum.doctor,
-            first_name="Radiolog",
-            last_name="Principal"
+            first_name="Alexandru",
+            last_name="Georgescu",
+            title="Univ. Dr."  # Doctor universitar
         )
     ]
 
     for user in users:
         session.add(user)
-        print(f"  ✅ {user.username} ({user.role.value})")
+        if user.title:
+            print(f"  ✅ {user.username} ({user.title} {user.first_name} {user.last_name})")
+        else:
+            print(f"  ✅ {user.username} ({user.first_name} {user.last_name} - {user.role.value})")
 
 
 def add_default_pacs(session):
     """Adaugă PACS-uri default"""
-
-    if session.query(PacsUrl).count() > 0:
-        print("🏥 PACS-uri există deja, se omite...")
-        return
 
     print("🏥 Creare PACS-uri default...")
 
@@ -306,10 +306,6 @@ def add_default_pacs(session):
 def add_default_settings(session):
     """Adaugă setări default"""
 
-    if session.query(AppSettings).count() > 0:
-        print("⚙️ Setări există deja, se omite...")
-        return
-
     print("⚙️ Creare setări default...")
 
     settings = [
@@ -337,6 +333,11 @@ def add_default_settings(session):
             setting_key="auto_anonymize",
             setting_value="true",
             description="Anonimizare automată DICOM"
+        ),
+        AppSettings(
+            setting_key="pdf_include_title",
+            setting_value="true",
+            description="Include titulatura în documentele PDF"
         )
     ]
 
@@ -347,10 +348,6 @@ def add_default_settings(session):
 
 def add_default_report_titles(session):
     """Adaugă titluri default pentru rapoarte"""
-
-    if session.query(ReportTitle).count() > 0:
-        print("📄 Titluri rapoarte există deja, se omite...")
-        return
 
     print("📄 Creare titluri rapoarte default...")
 
@@ -368,7 +365,7 @@ def add_default_report_titles(session):
             title_text="Scintigrama tiroidiana cu 99mTcO4"
         ),
         ReportTitle(
-            title_text= "Scintigrama tiroidiana cu 131INa"
+            title_text="Scintigrama tiroidiana cu 131INa"
         ),
         ReportTitle(
             title_text="Scintigrama tiroidiana cu 99mTc + FID-MIBI"
@@ -383,7 +380,7 @@ def add_default_report_titles(session):
             title_text="Scintigrama miocardica cu 99mTc- FID-MIBI cu test la efort si de repaus"
         ),
         ReportTitle(
-            title_text="Scintigrama miocardica cu 99mTc- FID-MIBI cu test la efort "
+            title_text="Scintigrama miocardica cu 99mTc- FID-MIBI cu test la efort"
         ),
         ReportTitle(
             title_text="Scintigrama miocardica cu 99mTc- FID-MIBI de repaus"
@@ -398,7 +395,7 @@ def add_default_report_titles(session):
             title_text="Scintigrama Corp Intreg cu 99mTc-FID-MIBI"
         ),
         ReportTitle(
-            title_text="Diverticul  Meckel"
+            title_text="Diverticul Meckel"
         ),
         ReportTitle(
             title_text="Scintigrama ganglion santinela cu 99mTc – NANOSCAN"
@@ -416,7 +413,7 @@ def add_default_report_titles(session):
             title_text="Limfoscintigrafie cu 99mTc – NANOHSA"
         ),
         ReportTitle(
-            title_text="Scintigrama hepatica cu 99mTc + NANOSCAN "
+            title_text="Scintigrama hepatica cu 99mTc + NANOSCAN"
         ),
         ReportTitle(
             title_text="Scintigrama hepatica cu 99mTc + NANOHSA"

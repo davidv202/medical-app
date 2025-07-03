@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from weasyprint import HTML, CSS
@@ -8,14 +9,25 @@ class PdfGenerator:
     def __init__(self, css_path: str):
         self.css_path = css_path
 
-    def create_pdf(self, content: str, metadata: Dict[str, Any], output_path: str, doctor_name: str = None):
+    def create_pdf(self, content: str, metadata: Dict[str, Any], output_path: str, doctor_name: str = None,
+                   selected_title: str = None, header_image_path: str = None):
+
+        print(f"=== PDF GENERATOR DEBUG ===")
+        print(f"Header image path received: {header_image_path}")
+        print(f"Header image exists: {os.path.exists(header_image_path) if header_image_path else 'No path provided'}")
+
+        if header_image_path:
+            print(f"Absolute path: {os.path.abspath(header_image_path)}")
+            print(
+                f"File size: {os.path.getsize(header_image_path) if os.path.exists(header_image_path) else 'File not found'} bytes")
+
         generated_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         current_year = datetime.now().strftime("%Y")
 
         patient_metadata = self._filter_patient_metadata(metadata)
 
         html_content = self._build_html_content(
-            content, patient_metadata, generated_date, doctor_name, current_year
+            content, patient_metadata, generated_date, doctor_name, current_year, selected_title, header_image_path
         )
 
         stylesheets = []
@@ -29,18 +41,20 @@ class PdfGenerator:
         patient_fields = {
             # Patient information
             "Patient Name": "Nume pacient",
-            "Patient Birth Date": "Data nașterii",
+            "Patient Birth Date": "Data nasterii",
             "Patient Sex": "Sex",
-            "Patient Age": "Vârsta",
+            "Patient Age": "Varsta",
 
             # Examination information
-            "Study Date": "Data examinării",
+            "Study Date": "Data examinarii",
             "Description": "Tip examinare",
-            "Body Part Examined": "Zona examinată",
-            "Referring Physician": "Medic trimițător",
+            "Body Part Examined": "Zona examinata",
+            "Referring Physician Name": "Medic trimitator",
+            "Accession Number": "Dosar nr.",
+            "Radiopharmaceutical": "Radiofarmaceutic",
 
             # Institution information
-            "Institution Name": "Instituția medicală"
+            "Institution Name": "Institutia medicala"
         }
 
         filtered_metadata = {}
@@ -63,7 +77,7 @@ class PdfGenerator:
         return filtered_metadata
 
     def _build_html_content(self, content: str, patient_metadata: Dict[str, Any], generated_date: str,
-                            doctor_name: str = None, current_year: str = None, selected_title: str = None) -> str:
+                            doctor_name: str = None, current_year: str = None, selected_title: str = None, header_image_path: str = None) -> str:
 
         # Extrage datele din metadata
         patient_name = patient_metadata.get("Nume pacient", "")
@@ -72,11 +86,19 @@ class PdfGenerator:
         gamma_camera = patient_metadata.get("Model echipament", "")
         investigation = patient_metadata.get("Tip examinare", "")
         diagnosis = patient_metadata.get("Diagnostic de trimitere", "")
-        dose_mbq = patient_metadata.get("Doză administrată", "")
+        dose_mbq = patient_metadata.get("Doza administrata", "")
         radiopharmaceutical = patient_metadata.get("Radiofarmaceutic", "")
-        exam_date = patient_metadata.get("Data examinării", "")
+        exam_date = patient_metadata.get("Data examinarii", "")
+        referring_doctor = patient_metadata.get("Medic trimitator", "")
 
-        exam_title = selected_title if selected_title else "Scintigrama renală statică cu <sup>99m</sup>Tc- DMSA"
+        exam_title = selected_title if selected_title else ""
+
+        header_content = ""
+        if header_image_path and os.path.exists(header_image_path):
+            absolute_image_path = os.path.abspath(header_image_path)
+            header_content = f'<img src="file://{absolute_image_path}" alt="Antet Spital" class="header-image">'
+        else:
+            header_content = '<div class="header-placeholder"><!-- ANTET SPITAL --></div>'
 
         return f"""
         <!DOCTYPE html>
@@ -183,7 +205,7 @@ class PdfGenerator:
                 <div class="right-panel">
                     <!-- SPAȚIU PENTRU ANTETUL SPITALULUI -->
                     <div class="hospital-header-space">
-                        <!-- TU VEI PUNE AICI ANTETUL -->
+                        {header_content}<br><br><br><br>
                     </div>
 
                     <!-- DATELE PACIENTULUI -->
@@ -193,13 +215,13 @@ class PdfGenerator:
                             <strong>CNP:</strong> {cnp}<br>
                             <strong>Dosar nr.:</strong> {dosar_nr}<br>
                             <strong>Gamma camera:</strong> {gamma_camera}<br>
-                            <strong>Investigație la recomandarea:</strong><br>
+                            <strong>Investigatie la recomandarea:</strong> {referring_doctor}<br> 
                             <strong>Diagnostic de trimitere:</strong> {diagnosis}<br>
                             <strong>Doza:</strong> {dose_mbq} <strong>Radiofarmaceutic:</strong> <strong>{radiopharmaceutical}</strong>
                         </div>
 
                         <div class="exam-date-right">
-                            <strong>Data {exam_date}</strong>
+                            <strong>Data {self._format_date(exam_date)}</strong>
                         </div>
                     </div>
 
@@ -223,7 +245,7 @@ class PdfGenerator:
 
                         <div class="signature-right-bottom">
                             Medic specialist Medicina Nucleara<br>
-                            <strong>Asist. univ. Dr. Wael JALLOUL</strong>
+                            <strong>{doctor_name if doctor_name else "Dr. [Nume Medic]"}</strong>
                         </div>
                     </div>
 
@@ -260,3 +282,24 @@ class PdfGenerator:
 
         return ''.join(
             formatted_paragraphs) if formatted_paragraphs else f'<p style="margin: 12px 0; line-height: 1.5;">{content}</p>'
+
+    def _format_date(self, date_str: str) -> str:
+        if not date_str or date_str == 'N/A' or not date_str.strip():
+            return date_str
+
+        # Elimină toate caracterele care nu sunt cifre
+        clean_date = ''.join(filter(str.isdigit, date_str))
+
+        # Verifică dacă avem cel puțin 8 cifre pentru YYYYMMDD
+        if len(clean_date) >= 8:
+            year = clean_date[:4]
+            month = clean_date[4:6]
+            day = clean_date[6:8]
+            return f"{year}-{month}-{day}"
+
+        # Dacă data vine deja formatată cu '-', returnează-o
+        if '-' in date_str and len(date_str) == 10:
+            return date_str
+
+        # Dacă nu putem formata, returnează originalul
+        return date_str

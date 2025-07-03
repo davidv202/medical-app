@@ -38,7 +38,8 @@ class HybridPacsController:
         except PacsDataError as e:
             raise e
 
-    def export_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
+    def export_pdf(self, study_id: str, result_text: str, parent_widget, current_user,
+                   selected_title: str = None, header_image_path:str = None) -> bool:
         try:
             metadata = self.get_study_metadata(study_id)
 
@@ -47,9 +48,12 @@ class HybridPacsController:
             timestamp = datetime.now().strftime("%H%M%S")
             filename = f"{patient}_{study_date}_{timestamp}.pdf"
 
-            doctor_name = current_user.get_full_name() if current_user else None
+            doctor_name = current_user.get_full_name_with_title() if current_user else None
 
-            pdf_path = self._pdf_service.generate_pdf(result_text, metadata, filename, doctor_name)
+            settings = Settings()
+            header_image_path = settings.HEADER_IMAGE_PATH if os.path.exists(settings.HEADER_IMAGE_PATH) else None
+
+            pdf_path = self._pdf_service.generate_pdf(result_text, metadata, filename, doctor_name, selected_title, header_image_path)
             self._last_generated_pdf_path = pdf_path
 
             # Save examination result to study
@@ -62,15 +66,17 @@ class HybridPacsController:
             self._notification_service.show_error(parent_widget, "Eroare", str(e))
             return False
 
-    def preview_pdf(self, study_id: str, result_text: str, parent_widget, current_user) -> bool:
+    def preview_pdf(self, study_id: str, result_text: str, parent_widget, current_user,
+                    selected_title: str = None, header_image_path: str = None) -> bool:
         try:
             if not result_text.strip():
                 self._notification_service.show_warning(parent_widget, "Atentie", "Completeaza rezultatul explorarii.")
                 return False
 
             metadata = self.get_study_metadata(study_id)
-            doctor_name = current_user.get_full_name() if current_user else None
-            preview_path = self._pdf_service.preview_pdf(result_text, metadata, doctor_name)
+            doctor_name = current_user.get_full_name_with_title() if current_user else None
+
+            preview_path = self._pdf_service.preview_pdf(result_text, metadata, doctor_name, selected_title, header_image_path)
 
             import sys
             import subprocess

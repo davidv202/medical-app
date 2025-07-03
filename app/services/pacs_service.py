@@ -46,9 +46,11 @@ class PacsService(IPacsService):
                 "Study Time": data.get('MainDicomTags', {}).get('StudyTime', 'N/A'),
                 "Description": data.get('MainDicomTags', {}).get('StudyDescription', 'N/A'),
                 "Study Instance UID": data.get('MainDicomTags', {}).get('StudyInstanceUID', 'N/A'),
-                "Accession Number": data.get('MainDicomTags', {}).get('AccessionNumber', 'N/A'),
                 "Referring Physician": data.get('MainDicomTags', {}).get('ReferringPhysicianName', 'N/A'),
                 "Study ID": data.get('MainDicomTags', {}).get('StudyID', 'N/A'),
+                "Accession Number": data.get('MainDicomTags', {}).get('AccessionNumber', 'N/A'),
+                "Referring Physician Name": data.get('MainDicomTags', {}).get('ReferringPhysicianName', 'N/A'),
+                "Radipharmaceutical"
 
                 # Date Echipament
                 "Institution Name": data.get('MainDicomTags', {}).get('InstitutionName', 'N/A'),

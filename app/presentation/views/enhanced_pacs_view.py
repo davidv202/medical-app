@@ -370,8 +370,12 @@ class EnhancedPacsView(QWidget):
             return
 
         current_user = self._auth_controller.get_current_user() if self._auth_controller else None
+        selected_title = self.result_widget.get_selected_title()
 
-        success = self._pacs_controller.export_pdf(study_id, result_text, self, current_user)
+        settings = Settings()
+        header_image_path = settings.HEADER_IMAGE_PATH
+
+        success = self._pacs_controller.export_pdf(study_id, result_text, self, current_user, selected_title, header_image_path)
         if success:
             self.last_generated_pdf_path = self._pacs_controller._last_generated_pdf_path
 
@@ -383,8 +387,11 @@ class EnhancedPacsView(QWidget):
 
         result_text = self.result_widget.get_result_text()
         current_user = self._auth_controller.get_current_user() if self._auth_controller else None
+        selected_title = self.result_widget.get_selected_title()
+        settings = Settings()
+        header_image_path = settings.HEADER_IMAGE_PATH
 
-        self._pacs_controller.preview_pdf(study_id, result_text, self, current_user)
+        self._pacs_controller.preview_pdf(study_id, result_text, self, current_user, selected_title, header_image_path)
 
     def _print_pdf(self):
         if not self.last_generated_pdf_path or not os.path.exists(self.last_generated_pdf_path):
