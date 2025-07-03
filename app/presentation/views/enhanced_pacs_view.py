@@ -1,9 +1,11 @@
+import re
 import os
 import subprocess
 import sys
+from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QProgressBar,
-    QScrollArea, QSizePolicy, QSplitter, QTabWidget, QFrame, QApplication
+    QScrollArea, QSizePolicy, QSplitter, QTabWidget, QFrame, QApplication, QFileDialog
 )
 from PyQt6.QtCore import QThread, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -32,6 +34,7 @@ class EnhancedPacsView(QWidget):
         self._setup_shortcuts()
         load_style(self)
         self._load_studies()
+        self._last_save_directory = None
 
     def _setup_ui(self):
         # Main layout with tabs
@@ -369,15 +372,59 @@ class EnhancedPacsView(QWidget):
             self._notification_service.show_warning(self, "Warning", "Please enter examination results.")
             return
 
+        # Obține metadata pentru numele default al fișierului
+        try:
+            metadata = self._pacs_controller.get_study_metadata(study_id)
+            patient_name = re.sub(r'\W+', '_', metadata["Patient Name"])
+            study_date = metadata["Study Date"].replace("-", "")
+            timestamp = datetime.now().strftime("%H%M%S")
+            default_filename = f"{patient_name}_{study_date}_{timestamp}.pdf"
+        except:
+            default_filename = f"medical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+        # Determină folder-ul de start pentru dialog
+        if self._last_save_directory and os.path.exists(self._last_save_directory):
+            # Folosește ultimul folder folosit
+            start_directory = os.path.join(self._last_save_directory, default_filename)
+        else:
+            # Folosește folder-ul default din settings
+            settings = Settings()
+            default_save_dir = settings.PDF_OUTPUT_DIR
+            os.makedirs(default_save_dir, exist_ok=True)
+            start_directory = os.path.join(default_save_dir, default_filename)
+
+        # Dialog pentru selectarea locației de salvare
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Salvează raportul PDF",
+            start_directory,
+            "PDF Files (*.pdf);;All Files (*)"
+        )
+
+        if not file_path:
+            return  # Utilizatorul a anulat
+
+        # Asigură-te că fișierul are extensia .pdf
+        if not file_path.lower().endswith('.pdf'):
+            file_path += '.pdf'
+
+        # SALVEAZĂ FOLDER-UL PENTRU URMĂTOAREA DATĂ
+        self._last_save_directory = os.path.dirname(file_path)
+
         current_user = self._auth_controller.get_current_user() if self._auth_controller else None
         selected_title = self.result_widget.get_selected_title()
 
         settings = Settings()
         header_image_path = settings.HEADER_IMAGE_PATH
 
-        success = self._pacs_controller.export_pdf(study_id, result_text, self, current_user, selected_title, header_image_path)
+        # Trimite calea completă specificată de utilizator
+        success = self._pacs_controller.export_pdf(
+            study_id, result_text, self, current_user, selected_title, 
+            header_image_path, custom_path=file_path
+        )
+        
         if success:
-            self.last_generated_pdf_path = self._pacs_controller._last_generated_pdf_path
+            self.last_generated_pdf_path = file_path
 
     def _preview_pdf(self):
         study_id = self.study_list.get_selected_study_id()

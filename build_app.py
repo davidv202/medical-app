@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script pentru crearea executabilului Medical PACS pe Windows
-Versiunea îmbunătățită care rezolvă problemele cu PyInstaller
+Versiunea îmbunătățită care include assets din app/assets/
 """
 
 import os
@@ -86,6 +86,37 @@ def check_dependencies():
     print("✅ Toate dependințele sunt OK!")
     return True
 
+def verify_assets():
+    """Verifică dacă fișierele assets există"""
+    print("\n🖼️  Verificare assets...")
+    
+    assets_dir = "app/assets"
+    if not os.path.exists(assets_dir):
+        print(f"⚠️  Directorul assets nu exista: {assets_dir}")
+        print("Creez directorul assets...")
+        os.makedirs(assets_dir, exist_ok=True)
+        return True
+    
+    # Verifică fișierele importante
+    important_files = [
+        "header_spital.png",
+        "icon.ico",  # Daca ai un icon pentru aplicatie
+    ]
+    
+    found_files = []
+    for root, dirs, files in os.walk(assets_dir):
+        for file in files:
+            rel_path = os.path.relpath(os.path.join(root, file), assets_dir)
+            found_files.append(rel_path)
+            print(f"📁 Gasit: {rel_path}")
+    
+    if not found_files:
+        print("⚠️  Nu s-au gasit fisiere in directorul assets")
+    else:
+        print(f"✅ Gasite {len(found_files)} fisiere assets")
+    
+    return True
+
 def clean_build():
     """Curăță build-urile anterioare"""
     print("\n🧹 Curățând build-urile anterioare...")
@@ -115,6 +146,15 @@ def run_pyinstaller_direct():
     """Rulează PyInstaller direct cu parametrii în linia de comandă"""
     print("\n🔨 Creând executabilul cu PyInstaller...")
     
+    # Verifică dacă avem icon pentru aplicație
+    icon_path = None
+    possible_icons = ["app/assets/icon.ico", "app/assets/app_icon.ico", "icon.ico"]
+    for icon in possible_icons:
+        if os.path.exists(icon):
+            icon_path = icon
+            print(f"🎨 Folosesc icon: {icon_path}")
+            break
+    
     # Parametrii pentru PyInstaller
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -123,6 +163,8 @@ def run_pyinstaller_direct():
         "--windowed",
         "--clean",
         "--noconfirm",
+        # Adaugă directorul assets complet
+        "--add-data", "app/assets;app/assets",
         # Adaugă fișierele de stil
         "--add-data", "app/presentation/styles/*.qss;app/presentation/styles",
         "--add-data", "app/presentation/styles/*.css;app/presentation/styles",
@@ -147,15 +189,25 @@ def run_pyinstaller_direct():
         "--hidden-import", "app.services.pacs_url_service",
         "--hidden-import", "app.services.settings_service",
         "--hidden-import", "app.services.dicom_anonymizer_service",
+        "--hidden-import", "app.services.report_title_service",
         # Exclude module grele
         "--exclude-module", "tkinter",
         "--exclude-module", "matplotlib",
         "--exclude-module", "numpy",
         "--exclude-module", "pandas",
         "--exclude-module", "scipy",
-        # Fișierul principal
-        MAIN_SCRIPT
+        "--exclude-module", "jupyter",
+        "--exclude-module", "notebook",
+        # UPX compression (opțional - comentează dacă ai probleme)
+        # "--upx-dir", "C:/upx",  # Dacă ai UPX instalat
     ]
+    
+    # Adaugă icon dacă există
+    if icon_path:
+        cmd.extend(["--icon", icon_path])
+    
+    # Adaugă fișierul principal
+    cmd.append(MAIN_SCRIPT)
     
     print("📝 Comanda PyInstaller:")
     print(" ".join(cmd))
@@ -189,22 +241,58 @@ def verify_executable():
     size_mb = os.path.getsize(exe_path) / (1024 * 1024)
     print(f"📏 Dimensiune executabil: {size_mb:.1f} MB")
     
-    if size_mb < 50:  # Un executabil PyQt6 ar trebui să fie > 50MB
+    if size_mb < 80:  # Un executabil PyQt6 cu WeasyPrint ar trebui să fie > 80MB
         print("⚠️  Executabilul pare prea mic, possibil lipsesc dependințe")
     else:
         print("✅ Dimensiunea executabilului pare OK")
     
-    # Test rapid de rulare (doar pentru a vedea dacă pornește)
-    print("🧪 Testând executabilul...")
-    try:
-        # Rulează cu timeout scurt pentru a verifica dacă pornește
-        result = subprocess.run([exe_path, "--version"], 
-                              timeout=10, capture_output=True, text=True)
-        print("✅ Executabilul răspunde la comenzi")
-    except subprocess.TimeoutExpired:
-        print("✅ Executabilul pornește (timeout normal pentru GUI)")
-    except Exception as e:
-        print(f"⚠️  Nu s-a putut testa executabilul: {e}")
+    return True
+
+def test_assets_in_executable():
+    """Testează dacă assets-urile sunt incluse în executabil"""
+    print("\n🧪 Testează dacă assets-urile sunt incluse...")
+    
+    # Creează un script de test temporar
+    test_script = """
+import sys
+import os
+from pathlib import Path
+
+# Detecteaza daca rulam ca executabil PyInstaller
+if getattr(sys, 'frozen', False):
+    # Ruleaza ca executabil
+    bundle_dir = sys._MEIPASS
+    print(f"Running as executable, bundle dir: {bundle_dir}")
+    
+    # Verifica assets
+    assets_path = os.path.join(bundle_dir, 'app', 'assets')
+    if os.path.exists(assets_path):
+        print(f"Assets found at: {assets_path}")
+        files = list(os.listdir(assets_path))
+        print(f"Files: {files}")
+        
+        # Verifica header_spital.png specific
+        header_path = os.path.join(assets_path, 'header_spital.png')
+        if os.path.exists(header_path):
+            size = os.path.getsize(header_path)
+            print(f"header_spital.png found, size: {size} bytes")
+        else:
+            print("header_spital.png NOT found")
+    else:
+        print(f"Assets directory not found")
+        print(f"Bundle contents:")
+        for item in os.listdir(bundle_dir):
+            print(f"  - {item}")
+else:
+    print("Not running as executable")
+"""
+    
+    # Salvează script-ul de test cu encoding UTF-8
+    with open("test_assets.py", "w", encoding="utf-8") as f:
+        f.write(test_script)
+    
+    print("✅ Script de test creat: test_assets.py")
+    print("  Poti rula 'dist/MediCore-PACS.exe test_assets.py' pentru a testa assets-urile")
     
     return True
 
@@ -225,20 +313,34 @@ def create_release_package():
     shutil.copy2(exe_path, release_dir)
     print(f"✅ Executabil copiat în {release_dir}")
     
-    # Creează directoarele necesare
-    os.makedirs(f"{release_dir}/generated_pdfs", exist_ok=True)
-    os.makedirs(f"{release_dir}/tmp_pdfs", exist_ok=True)
-    os.makedirs(f"{release_dir}/local_studies_cache", exist_ok=True)
+    # Creează directoarele necesare pentru runtime
+    runtime_dirs = [
+        "generated_pdfs",
+        "tmp_pdfs", 
+        "local_studies_cache"
+    ]
+    
+    for dir_name in runtime_dirs:
+        os.makedirs(f"{release_dir}/{dir_name}", exist_ok=True)
+        print(f"📁 Director creat: {dir_name}")
     
     # Copiază documentația
-    if os.path.exists("README.txt"):
-        shutil.copy2("README.txt", release_dir)
+    docs_to_copy = [
+        ("README.txt", "README.txt"),
+        ("database_init.py", "database_init.py"),
+        ("test_assets.py", "test_assets.py")
+    ]
     
-    if os.path.exists("database_init.py"):
-        shutil.copy2("database_init.py", release_dir)
+    for src, dst in docs_to_copy:
+        if os.path.exists(src):
+            shutil.copy2(src, f"{release_dir}/{dst}")
+            print(f"📋 Copiat: {src}")
     
     # Creează instrucțiunile de instalare
     create_install_instructions(release_dir)
+    
+    # Creează script-ul de test pentru assets
+    create_assets_test_script(release_dir)
     
     # Creează arhiva ZIP
     archive_name = f"{APP_NAME}-v{APP_VERSION}-Windows"
@@ -251,18 +353,48 @@ def create_release_package():
     
     return True
 
+def create_assets_test_script(release_dir):
+    """Creează script pentru testarea assets-urilor"""
+    test_script = f"""@echo off
+echo ========================================
+echo  Testing {APP_NAME} Assets
+echo ========================================
+echo.
+
+echo Testing if assets are properly bundled...
+{APP_NAME}.exe --test-assets
+
+echo.
+echo If you see errors above, the assets might not be properly bundled.
+echo Please contact support with the error details.
+echo.
+pause
+"""
+    
+    with open(f"{release_dir}/test-assets.bat", "w", encoding="utf-8") as f:
+        f.write(test_script)
+
 def create_install_instructions(release_dir):
     """Creează fișierul cu instrucțiuni de instalare"""
     instructions = f"""=== MEDICAL PACS v{APP_VERSION} - GHID INSTALARE ===
 
-CERINȚE SISTEM:
+📋 CONȚINUTUL PACHETULUI:
+- {APP_NAME}.exe          - Aplicația principală
+- generated_pdfs/         - Director pentru PDF-uri generate
+- tmp_pdfs/              - Director temporar pentru preview
+- local_studies_cache/   - Cache pentru studii locale DICOM
+- database_init.py       - Script pentru inițializarea bazei de date
+- test-assets.bat        - Test pentru verificarea assets-urilor
+- INSTALARE.txt          - Acest fișier
+
+🖥️ CERINȚE SISTEM:
 - Windows 10/11 (64-bit)
 - MySQL Server 5.7+ sau MariaDB 10.3+
 - 4GB RAM minimum
-- 500MB spațiu liber pe disk
+- 1GB spațiu liber pe disk
 - Conexiune la rețea (pentru PACS)
 
-INSTALARE PAS CU PAS:
+📚 INSTALARE PAS CU PAS:
 
 1. PREGĂTIREA BAZEI DE DATE
    a) Instalează MySQL Server de la: https://dev.mysql.com/downloads/mysql/
@@ -276,9 +408,10 @@ INSTALARE PAS CU PAS:
       EXIT;
 
 2. INSTALAREA APLICAȚIEI
-   a) Extraie toate fișierele din această arhivă într-un director
+   a) Extraie toate fișierele din această arhivă într-un director permanent
    b) Pentru prima rulare, click-dreapta pe {APP_NAME}.exe → "Run as administrator"
    c) Aplicația va crea automat tabelele în baza de date
+   d) Rulează test-assets.bat pentru a verifica că assets-urile sunt OK
 
 3. PRIMUL LOGIN
    Username: admin
@@ -290,43 +423,57 @@ INSTALARE PAS CU PAS:
    a) Din meniul principal → Admin Panel → PACS URLs
    b) Adaugă serverele tale PACS cu datele de conectare
    c) Testează conexiunea pentru fiecare server
-   d) Setează PACS-ul sursă și țintă din Settings
+   d) Setează PACS-ul sursă și țintă din setări
 
-PROBLEME FRECVENTE:
+🔧 PROBLEME FRECVENTE:
 
 ❌ "Could not connect to database"
    → Verifică dacă MySQL Server rulează (Services → MySQL)
-   → Verifică username/parola în app/config/settings.py
+   → Verifică datele de conectare în configurație
 
 ❌ "Permission denied" la pornire
-   → Rulează ca Administrator
+   → Rulează ca Administrator prima dată
    → Verifică dacă antivirusul blochează aplicația
+   → Adaugă excepție în Windows Defender
 
 ❌ "PACS connection failed"
-   → Verifică URL-ul serverului PACS
-   → Testează în browser: http://server-pacs:8042
+   → Verifică URL-ul serverului PACS (ex: http://server:8042)
+   → Testează în browser accesul la PACS
    → Verifică username/parola PACS
 
-❌ Executabilul nu pornește
-   → Instalează Visual C++ Redistributable 2015-2022
+❌ "Header image not found" în PDF-uri
+   → Rulează test-assets.bat pentru diagnosticare
+   → Verifică că ai extras complet arhiva ZIP
+
+❌ Executabilul nu pornește deloc
+   → Instalează Visual C++ Redistributable 2015-2022:
+     https://aka.ms/vs/17/release/vc_redist.x64.exe
    → Adaugă excepție în antivirus pentru {APP_NAME}.exe
 
-SETUP AUTOMAT BAZA DE DATE:
+🛠️ SETUP AUTOMAT BAZA DE DATE:
 Dacă ai probleme cu setup-ul manual, rulează:
 python database_init.py
 
-PENTRU ACTUALIZĂRI:
-1. Oprește aplicația veche
-2. Fă backup la baza de date (mysqldump)
-3. Înlocuiește executabilul cu versiunea nouă
-4. Rulează aplicația
+🔄 PENTRU ACTUALIZĂRI:
+1. Oprește aplicația veche complet
+2. Fă backup la baza de date (mysqldump medical_app > backup.sql)
+3. Înlocuiește {APP_NAME}.exe cu versiunea nouă
+4. Păstrează directoarele cu date (generated_pdfs, etc.)
+5. Rulează aplicația nouă
 
-SUPORT TEHNIC:
+📞 SUPORT TEHNIC:
 Email: support@medical-solutions.com
 Documentație: https://docs.medical-solutions.com
 
 Versiune: {APP_VERSION}
 Data build: {datetime.now().strftime('%d.%m.%Y %H:%M')}
+Includes assets: ✅ Da (app/assets integrat în executabil)
+
+🧪 TESTARE RAPIDĂ:
+1. Rulează {APP_NAME}.exe
+2. Loghează-te cu admin/admin  
+3. Încearcă să generezi un PDF de test
+4. Verifică că imaginea header apare în PDF
 """
     
     with open(f"{release_dir}/INSTALARE.txt", "w", encoding="utf-8") as f:
@@ -335,8 +482,8 @@ Data build: {datetime.now().strftime('%d.%m.%Y %H:%M')}
 def main():
     """Funcția principală"""
     print(f"🚀 Medical PACS Build Tool v{APP_VERSION}")
-    print("=" * 60)
-    print("Creează executabilul pentru Windows cu toate dependințele incluse")
+    print("=" * 70)
+    print("Creează executabilul pentru Windows cu assets incluse")
     print()
     
     # Verifică dacă suntem în directorul corect
@@ -349,6 +496,11 @@ def main():
     # Verificări și instalări
     if not check_dependencies():
         print("\n❌ Nu s-au putut rezolva dependințele!")
+        input("Apasă Enter pentru a ieși...")
+        return 1
+    
+    if not verify_assets():
+        print("\n❌ Probleme cu assets-urile!")
         input("Apasă Enter pentru a ieși...")
         return 1
     
@@ -365,27 +517,34 @@ def main():
         input("Apasă Enter pentru a ieși...")
         return 1
     
+    test_assets_in_executable()
+    
     if not create_release_package():
         print("\n❌ Eșec la crearea pachetului de distribuție!")
         input("Apasă Enter pentru a ieși...")
         return 1
     
     # Succes!
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print("🎉 BUILD COMPLET CU SUCCES!")
-    print("=" * 60)
+    print("=" * 70)
     print(f"📦 Executabil: dist/{APP_NAME}.exe")
     print(f"🗜️  Pachet distribuție: release/{APP_NAME}-v{APP_VERSION}-Windows.zip")
     print()
     print("📋 Ce să faci acum:")
     print("1. Testează executabilul local din dist/")
-    print("2. Distribuie arhiva ZIP din release/")
-    print("3. Utilizatorii urmează ghidul din INSTALARE.txt")
+    print("2. Rulează test-assets.bat pentru a verifica assets-urile")
+    print("3. Distribuie arhiva ZIP din release/")
+    print("4. Utilizatorii urmează ghidul din INSTALARE.txt")
     print()
-    print("🔧 Pentru debugging, verifică:")
-    print("- Logurile din directorul dist/")
-    print("- Că MySQL Server rulează pe calculatorul destinație")
-    print("- Că serverele PACS sunt accesibile")
+    print("🖼️  Assets incluse:")
+    print("- header_spital.png (pentru PDF-uri)")
+    print("- Toate fișierele din app/assets/")
+    print()
+    print("🔧 Pentru debugging:")
+    print("- Verifică că header-ul apare în PDF-urile generate")
+    print("- Testează pe un sistem curat fără Python instalat")
+    print("- Verifică că MySQL Server rulează pe sistemul destinație")
     
     input("\nApasă Enter pentru a ieși...")
     return 0

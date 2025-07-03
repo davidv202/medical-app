@@ -39,26 +39,37 @@ class HybridPacsController:
             raise e
 
     def export_pdf(self, study_id: str, result_text: str, parent_widget, current_user,
-                   selected_title: str = None, header_image_path:str = None) -> bool:
+               selected_title: str = None, header_image_path: str = None, 
+               custom_path: str = None) -> bool:
         try:
             metadata = self.get_study_metadata(study_id)
 
-            patient = re.sub(r'\W+', '_', metadata["Patient Name"])
-            study_date = metadata["Study Date"].replace("-", "")
-            timestamp = datetime.now().strftime("%H%M%S")
-            filename = f"{patient}_{study_date}_{timestamp}.pdf"
+            if custom_path:
+                # Folosește calea specificată de utilizator
+                pdf_path = custom_path
+            else:
+                # Folosește calea default
+                patient = re.sub(r'\W+', '_', metadata["Patient Name"])
+                study_date = metadata["Study Date"].replace("-", "")
+                timestamp = datetime.now().strftime("%H%M%S")
+                filename = f"{patient}_{study_date}_{timestamp}.pdf"
+                
+                settings = Settings()
+                pdf_path = os.path.join(settings.PDF_OUTPUT_DIR, filename)
 
             doctor_name = current_user.get_full_name_with_title() if current_user else None
 
             settings = Settings()
             header_image_path = settings.HEADER_IMAGE_PATH if os.path.exists(settings.HEADER_IMAGE_PATH) else None
 
-            pdf_path = self._pdf_service.generate_pdf(result_text, metadata, filename, doctor_name, selected_title, header_image_path)
+            # Trimite calea completă la pdf_service
+            self._pdf_service.generate_pdf(result_text, metadata, pdf_path, doctor_name, selected_title, header_image_path)
             self._last_generated_pdf_path = pdf_path
 
             # Save examination result to study
             self._save_examination_result_to_study(study_id, result_text)
 
+            filename = os.path.basename(pdf_path)
             self._notification_service.show_info(parent_widget, "Succes", f"Fisier PDF salvat: {filename}")
             return True
 

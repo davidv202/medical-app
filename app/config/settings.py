@@ -15,7 +15,7 @@ class Settings:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     STYLE_PATH = os.path.join(BASE_DIR, "app", "presentation", "styles", "style.qss")
     PDF_CSS_PATH = os.path.join(BASE_DIR, "app", "presentation", "styles", "pdf_style.css")
-    HEADER_IMAGE_PATH = os.path.join(BASE_DIR, "assets", "header_spital.png")
+    HEADER_IMAGE_PATH = os.path.join(BASE_DIR, "app", "assets", "header_spital.png")
 
     # PDF settings
     PDF_OUTPUT_DIR = "generated_pdfs"

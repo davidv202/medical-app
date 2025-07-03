@@ -1,8 +1,11 @@
 import os
 import re
+import base64
 from datetime import datetime
 from weasyprint import HTML, CSS
 from typing import Dict, Any
+from urllib.parse import urljoin
+from pathlib import Path
 
 
 class PdfGenerator:
@@ -12,14 +15,9 @@ class PdfGenerator:
     def create_pdf(self, content: str, metadata: Dict[str, Any], output_path: str, doctor_name: str = None,
                    selected_title: str = None, header_image_path: str = None):
 
-        print(f"=== PDF GENERATOR DEBUG ===")
+        print(f"=== PDF GENERATOR DEBUG (WINDOWS) ===")
         print(f"Header image path received: {header_image_path}")
         print(f"Header image exists: {os.path.exists(header_image_path) if header_image_path else 'No path provided'}")
-
-        if header_image_path:
-            print(f"Absolute path: {os.path.abspath(header_image_path)}")
-            print(
-                f"File size: {os.path.getsize(header_image_path) if os.path.exists(header_image_path) else 'File not found'} bytes")
 
         generated_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         current_year = datetime.now().strftime("%Y")
@@ -34,50 +32,55 @@ class PdfGenerator:
         if self.css_path:
             stylesheets.append(CSS(self.css_path))
 
-        HTML(string=html_content).write_pdf(output_path, stylesheets=stylesheets)
+        # Pe Windows, folosim base_url pentru căile relative
+        html_obj = HTML(string=html_content, base_url=Path.cwd().as_uri())
+        html_obj.write_pdf(output_path, stylesheets=stylesheets)
 
-    def _filter_patient_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
-
-        patient_fields = {
-            # Patient information
-            "Patient Name": "Nume pacient",
-            "Patient Birth Date": "Data nasterii",
-            "Patient Sex": "Sex",
-            "Patient Age": "Varsta",
-
-            # Examination information
-            "Study Date": "Data examinarii",
-            "Description": "Tip examinare",
-            "Body Part Examined": "Zona examinata",
-            "Referring Physician Name": "Medic trimitator",
-            "Accession Number": "Dosar nr.",
-            "Radiopharmaceutical": "Radiofarmaceutic",
-
-            # Institution information
-            "Institution Name": "Institutia medicala"
-        }
-
-        filtered_metadata = {}
-
-        for original_key, friendly_name in patient_fields.items():
-            value = metadata.get(original_key)
-            if value and value != 'N/A' and value.strip():
-                if original_key == "Study Time" and len(value) >= 6:
-                    try:
-                        formatted_time = f"{value[:2]}:{value[2:4]}:{value[4:6]}"
-                        filtered_metadata[friendly_name] = formatted_time
-                    except:
-                        filtered_metadata[friendly_name] = value
-                elif original_key == "Patient Sex":
-                    sex_mapping = {"M": "Masculin", "F": "Feminin", "O": "Altul"}
-                    filtered_metadata[friendly_name] = sex_mapping.get(value.upper(), value)
+    def _image_to_base64(self, image_path: str) -> str:
+        try:
+            print(f"Converting image to base64: {image_path}")
+            with open(image_path, 'rb') as image_file:
+                image_data = base64.b64encode(image_file.read()).decode('utf-8')
+                
+                ext = os.path.splitext(image_path)[1].lower()
+                if ext == '.png':
+                    mime_type = 'image/png'
+                elif ext in ['.jpg', '.jpeg']:
+                    mime_type = 'image/jpeg'
+                elif ext == '.gif':
+                    mime_type = 'image/gif'
                 else:
-                    filtered_metadata[friendly_name] = value
+                    mime_type = 'image/png'
+                
+                base64_string = f"data:{mime_type};base64,{image_data}"
+                print(f"Successfully converted to base64, length: {len(base64_string)}")
+                return base64_string
+                
+        except Exception as e:
+            print(f"Error converting image to base64: {e}")
+            return ""
 
-        return filtered_metadata
+    def _get_windows_file_uri(self, file_path: str) -> str:
+        """Convertește calea Windows în URI valid pentru WeasyPrint"""
+        try:
+            normalized_path = os.path.normpath(file_path)
+            
+            path_obj = Path(normalized_path)
+            file_uri = path_obj.as_uri()
+            
+            print(f"Windows path: {file_path}")
+            print(f"Normalized path: {normalized_path}")
+            print(f"File URI: {file_uri}")
+            
+            return file_uri
+            
+        except Exception as e:
+            print(f"Error creating Windows file URI: {e}")
+            return ""
 
     def _build_html_content(self, content: str, patient_metadata: Dict[str, Any], generated_date: str,
-                            doctor_name: str = None, current_year: str = None, selected_title: str = None, header_image_path: str = None) -> str:
+                            doctor_name: str = None, current_year: str = None, selected_title: str = None, 
+                            header_image_path: str = None) -> str:
 
         # Extrage datele din metadata
         patient_name = patient_metadata.get("Nume pacient", "")
@@ -95,9 +98,22 @@ class PdfGenerator:
 
         header_content = ""
         if header_image_path and os.path.exists(header_image_path):
-            absolute_image_path = os.path.abspath(header_image_path)
-            header_content = f'<img src="file://{absolute_image_path}" alt="Antet Spital" class="header-image">'
+            print("Attempting base64 conversion...")
+            base64_image = self._image_to_base64(header_image_path)
+            if base64_image:
+                header_content = f'<img src="{base64_image}" alt="Antet Spital" class="header-image">'
+                print("✅ Using base64 image")
+            else:
+                print("❌ Base64 conversion failed, trying file URI...")
+                file_uri = self._get_windows_file_uri(header_image_path)
+                if file_uri:
+                    header_content = f'<img src="{file_uri}" alt="Antet Spital" class="header-image">'
+                    print("✅ Using file URI")
+                else:
+                    print("❌ File URI failed, using placeholder")
+                    header_content = '<div class="header-placeholder"><!-- ANTET SPITAL - IMAGE ERROR --></div>'
         else:
+            print("❌ Header image not found, using placeholder")
             header_content = '<div class="header-placeholder"><!-- ANTET SPITAL --></div>'
 
         return f"""
@@ -150,11 +166,11 @@ class PdfGenerator:
                         primar med. nucl.<br>
                         <strong>Cati-Raluca<br>
                         STOLNICEANU</strong><br>
-                        – asist. univ. dr., medic<br>
-                        specialist med.nucl.<br>
+                        – asist. univ. dr.,<br>
+                        medic primar med.nucl.<br>
                         <strong>Wael JALLOUL</strong><br>
                         – asist. univ. dr., medic<br>
-                        specialist med.nucl.
+                        medic primar med.nucl.
                     </div>
 
                     <div class="section-header">
@@ -257,6 +273,45 @@ class PdfGenerator:
         </body>
         </html>
         """
+
+    def _filter_patient_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        patient_fields = {
+            # Patient information
+            "Patient Name": "Nume pacient",
+            "Patient Birth Date": "Data nasterii",
+            "Patient Sex": "Sex",
+            "Patient Age": "Varsta",
+
+            # Examination information
+            "Study Date": "Data examinarii",
+            "Description": "Tip examinare",
+            "Body Part Examined": "Zona examinata",
+            "Referring Physician Name": "Medic trimitator",
+            "Accession Number": "Dosar nr.",
+            "Radiopharmaceutical": "Radiofarmaceutic",
+
+            # Institution information
+            "Institution Name": "Institutia medicala"
+        }
+
+        filtered_metadata = {}
+
+        for original_key, friendly_name in patient_fields.items():
+            value = metadata.get(original_key)
+            if value and value != 'N/A' and value.strip():
+                if original_key == "Study Time" and len(value) >= 6:
+                    try:
+                        formatted_time = f"{value[:2]}:{value[2:4]}:{value[4:6]}"
+                        filtered_metadata[friendly_name] = formatted_time
+                    except:
+                        filtered_metadata[friendly_name] = value
+                elif original_key == "Patient Sex":
+                    sex_mapping = {"M": "Masculin", "F": "Feminin", "O": "Altul"}
+                    filtered_metadata[friendly_name] = sex_mapping.get(value.upper(), value)
+                else:
+                    filtered_metadata[friendly_name] = value
+
+        return filtered_metadata
 
     def _format_content_for_html(self, content: str) -> str:
         if not content.strip():

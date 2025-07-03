@@ -13,11 +13,11 @@ class PdfService(IPdfService):
         os.makedirs(output_dir, exist_ok=True)
 
     def generate_pdf(self, content: str, metadata: Dict[str, Any], output_path: str, doctor_name: str = None,
-                     selected_title: str = None, header_image_path: str = None) -> str:
+                 selected_title: str = None, header_image_path: str = None) -> str:
         try:
-            full_path = os.path.join(self._output_dir, output_path)
-            self._pdf_generator.create_pdf(content, metadata, full_path, doctor_name, selected_title, header_image_path)
-            return full_path
+            # Nu mai concatenează cu self._output_dir - folosește calea completă primită
+            self._pdf_generator.create_pdf(content, metadata, output_path, doctor_name, selected_title, header_image_path)
+            return output_path
         except Exception as e:
             raise PdfGenerationError(f"Nu am putut genera fisierul PDF: {e}")
 

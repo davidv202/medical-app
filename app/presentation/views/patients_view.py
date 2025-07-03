@@ -8,18 +8,5 @@ class PatientsView(CenteredView):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Patients Management")
-        self._setup_ui()
         load_style(self)
 
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-
-        title = QLabel("Patients Management")
-        title.setObjectName("SectionTitle")
-        layout.addWidget(title)
-
-        content = QLabel("Patient management features will be implemented here.")
-        content.setWordWrap(True)
-        layout.addWidget(content)
-
-        layout.addStretch()
